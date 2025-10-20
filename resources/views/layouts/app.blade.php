@@ -16,7 +16,7 @@
     @stack('styles')
 </head>
 
-<body>
+<body class="{{ Route::currentRouteName() === 'contact' ? 'contact-page-body' : '' }}">
     @if (Route::currentRouteName() === 'home')
         <div class="hero-section">
             <header>
