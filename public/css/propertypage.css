@@ -1,0 +1,208 @@
+/* ===============================
+   PROPERTIES PAGE — refined gold accent design
+================================= */
+
+.properties-page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 60px 20px;
+}
+
+.page-title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 300;
+  font-size: 2.5em;
+  margin: 0 0 32px 0;
+  color: var(--text-light);
+  text-align: center;
+}
+
+/* --- Filters --- */
+.filters {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 15px;
+  margin-bottom: 36px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.filters select,
+.filters input {
+  padding: 10px 14px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.20);
+  color: var(--text-light);
+  border-radius: 6px;
+}
+
+.filters select:focus,
+.filters input:focus {
+  outline: 2px solid var(--gold-accent);
+  border-color: var(--gold-accent);
+}
+
+/* --- Grid --- */
+.properties-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 32px;
+  justify-items: center;
+}
+
+/* ==================================
+   PROPERTY CARD — premium gold frame
+================================== */
+.property-card {
+  width: 100%;
+  max-width: 360px;
+  background-color: var(--navy-blue);
+  border: 1.5px solid rgba(212, 184, 124, 0.65); /* thinner elegant gold frame */
+  border-radius: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: var(--text-light);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.45);
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+
+.property-card:hover {
+  transform: translateY(-8px);
+  border-color: var(--gold-accent);
+  box-shadow: 0 18px 44px rgba(0,0,0,0.55);
+}
+
+.property-card .property-image-container {
+  height: 240px;
+  overflow: hidden;
+  clip-path: polygon(0 0, 100% 0, 100% 88%, 0% 100%);
+  position: relative;
+}
+
+/* --- Property Image --- */
+.property-image {
+  height: 240px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  clip-path: polygon(0 0, 100% 0, 100% 88%, 0% 100%);
+  transition: transform .45s ease;
+  position: relative;
+}
+
+.property-card .property-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .45s ease;
+}
+
+.property-card:hover .property-image {
+  /* background-size: 108%; */ /* This was causing the issue */
+  transform: scale(1.08);
+}
+
+/* --- Angled Gold Accent (matches image edge) --- */
+.property-image::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--gold-accent);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%); /* Ensures it follows the parent's clip-path */
+}
+
+/* --- Card Content --- */
+.property-card-content {
+  padding: 22px 24px 28px;
+  text-align: left;
+}
+
+.property-card-content h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 10px 0;
+}
+
+.property-card-content p {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.92rem;
+  color: rgba(255,255,255,0.78);
+  margin: 4px 0;
+}
+
+.property-card-content .price {
+  color: var(--gold-accent);
+  font-weight: 600;
+  margin-top: 8px;
+  font-size: 1.1rem;
+}
+
+/* --- Button --- */
+.property-card-content .btn {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 8px 20px;
+  border: 1px solid var(--gold-accent);
+  color: var(--gold-accent);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: background-color .25s ease, color .25s ease, transform .15s ease;
+}
+.property-card-content .btn:hover {
+  background-color: var(--gold-accent);
+  color: var(--navy-blue);
+}
+.property-card-content .btn:active { transform: translateY(1px); }
+
+/* --- Pagination --- */
+.pagination {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.pagination nav ul {
+  list-style: none;
+  display: flex;
+  gap: 10px;
+  padding: 0;
+}
+.pagination nav ul li a,
+.pagination nav ul li span {
+  color: var(--text-light);
+  text-decoration: none;
+  padding: 8px 15px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  transition: color .2s ease, border-color .2s ease;
+}
+.pagination nav ul li a:hover {
+  color: var(--gold-accent);
+  border-color: rgba(192,168,127,.5);
+}
+.pagination nav ul li span[aria-current="page"],
+.pagination nav ul li a.active {
+  border: 1px solid var(--gold-accent);
+  color: var(--gold-accent);
+  font-weight: 600;
+}
+
+/* --- Responsive --- */
+@media (max-width: 992px) {
+  .property-card { max-width: 48vw; }
+}
+@media (max-width: 768px) {
+  .property-card { max-width: 92vw; }
+}
+@media (max-width: 480px) {
+  .page-title { font-size: 1.7em; }
+}
