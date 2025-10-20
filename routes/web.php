@@ -10,7 +10,16 @@ Route::prefix('properties')->group(function () {
     Route::get('/', [PropertyController::class, 'index'])->name('properties.index');
     Route::get('/{property:slug}', [PropertyController::class, 'show'])->name('properties.show');
 });
+
+Route::get('/contact', function () {
+    return view('contact');
+})->name('contact');
  
+// Temporary debug route to check php.ini settings
+Route::get('/php-info', function () {
+    phpinfo();
+})->name('php.info');
+
 Route::prefix('admin')->name('admin.')->group(function () {
     // Point the base /admin/properties URL to the create page
     Route::get('properties', [PropertyAdminController::class, 'create'])->name('properties.create');

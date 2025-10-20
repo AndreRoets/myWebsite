@@ -1,128 +1,108 @@
 @extends('layouts.app')
 
-@section('title', 'Contact Us')
+@section('title', 'Contact Us - Home Finders Coastal')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/contact.css') }}">
     <style>
-        /* The provided CSS uses a linear gradient on the body, which might conflict with other pages.
-           This will apply it only to the contact page body. */
-        body {
-            background: linear-gradient(180deg, #0b1a29, #0d1b2a);
+        .contact-page {
+            padding: 80px 0;
+            background: #f4f6f9;
+        }
+        .contact-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 40px;
+        }
+        @media (min-width: 900px) {
+            .contact-container {
+                grid-template-columns: 1fr 1.2fr;
+            }
+        }
+        .contact-info, .contact-form-section {
+            background: #fff;
+            padding: 30px 40px;
+            border: 1px solid #e9ecef;
+        }
+        .contact-info h2, .contact-form-section h2 {
+            font-family: "Playfair Display", serif;
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #212529;
+        }
+        .contact-info p {
+            color: #6c757d;
+            line-height: 1.7;
+            margin-bottom: 25px;
+        }
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            color: #495057;
+        }
+        .info-item i {
+            font-size: 18px;
+            width: 20px;
+            text-align: center;
+            color: #007bff;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: .5rem;
+            font-weight: 600;
+            color: #495057;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ced4da;
+            font-family: "Montserrat", sans-serif;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
         }
     </style>
 @endpush
 
 @section('content')
-
-<main>
-    <section class="hero">
-        <div class="container hero-frame">
-            <div class="bg"></div>
-            <div class="content">
-                <h1>Connect with Our Private Client Team</h1>
-                <p>Your aspirations demand a partner who understands the nuances of luxury real estate. Reach out to begin your bespoke property journey.</p>
-                <a class="cta" href="{{ route('properties.index') }}">VIEW PORTFOLIO</a>
-            </div>
-        </div>
-    </section>
-
-    <section class="container contact">
-        {{-- Left Panel: Contact Form --}}
-        <div class="card panel">
-            <h3>Send Us a Message</h3>
-            <p class="text-dim" style="font-size: 14px; margin-top: -8px; margin-bottom: 16px;">We'll get back to you within one business day.</p>
-            <form action="#" method="POST" class="form-grid">
+<div class="contact-page">
+    <div class="contact-container">
+        <section class="contact-info">
+            <h2>Get in Touch</h2>
+            <p>We'd love to hear from you. Whether you have a question about a property, our services, or anything else, our team is ready to answer all your questions.</p>
+            <div class="info-item"><i class="fas fa-map-marker-alt"></i><span>123 Coastal Drive, Cape Town, SA</span></div>
+            <div class="info-item"><i class="fas fa-phone"></i><span>+27 21 123 4567</span></div>
+            <div class="info-item"><i class="fas fa-envelope"></i><span>info@hfcoastal.co.za</span></div>
+        </section>
+        <section class="contact-form-section">
+            <h2>Send Us a Message</h2>
+            <form action="#" method="POST">
                 @csrf
-                <div class="stack-16" style="grid-template-columns: 1fr 1fr; gap: 12px;">
-                    <div>
-                        <label for="first_name" class="label">First Name</label>
-                        <input type="text" id="first_name" name="first_name" class="input" placeholder="John" required>
-                    </div>
-                    <div>
-                        <label for="last_name" class="label">Last Name</label>
-                        <input type="text" id="last_name" name="last_name" class="input" placeholder="Doe" required>
-                    </div>
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" required>
                 </div>
-                <div>
-                    <label for="email" class="label">Email Address</label>
-                    <input type="email" id="email" name="email" class="input" placeholder="you@example.com" required>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required>
                 </div>
-                <div>
-                    <label for="phone" class="label">Phone Number (Optional)</label>
-                    <input type="tel" id="phone" name="phone" class="input" placeholder="+1 (555) 000-0000">
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" required></textarea>
                 </div>
-                <div>
-                    <label for="message" class="label">Your Message</label>
-                    <textarea id="message" name="message" class="textarea" placeholder="How can we assist you today?" required></textarea>
-                </div>
-                <button type="submit" class="btn-primary">Send Message</button>
+                <button type="submit" class="hero-btn">Send Message</button>
             </form>
-        </div>
-
-        {{-- Right Panel: Contact Info --}}
-        <aside class="card panel">
-            <div class="stack-24">
-                <div>
-                    <h3>Contact Information</h3>
-                    <div class="info-block">
-                        <p>Our team is available to assist with your inquiries. We pride ourselves on prompt and discreet communication.</p>
-                        <div class="kv">
-                            <span class="k">Email</span>
-                            <a href="mailto:info@hfcoastal.co.za" class="v gold">info@hfcoastal.co.za</a>
-                        </div>
-                        <div class="kv">
-                            <span class="k">Phone</span>
-                            <span class="v">+27 21 123 4567</span>
-                        </div>
-                    </div>
-                </div>
-
-                <hr class="gold-line">
-
-                <div>
-                    <h3 style="margin-bottom: 8px;">Office Hours</h3>
-                    <table class="table">
-                        <tbody>
-                            <tr>
-                                <td>Mon – Fri</td>
-                                <td>9:00 AM – 5:00 PM</td>
-                            </tr>
-                            <tr>
-                                <td>Saturday</td>
-                                <td>10:00 AM – 2:00 PM</td>
-                            </tr>
-                            <tr>
-                                <td>Sunday</td>
-                                <td>By Appointment</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <hr class="gold-line">
-
-                <div>
-                    <h3 style="margin-bottom: 14px;">Follow Us</h3>
-                    <div class="social">
-                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-                    </div>
-                </div>
-            </div>
-        </aside>
-    </section>
-
-    <footer class="container footer">
-        <h3 class="display" style="text-align:center">Discretion Across Continents</h3>
-        <div class="world"></div>
-        <div class="meta">
-            <span>&copy; {{ date('Y') }} Home Finders Coastal. All Rights Reserved.</span>
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
-        </div>
-    </footer>
-</main>
-
+        </section>
+    </div>
+</div>
 @endsection

@@ -17,7 +17,7 @@
 </head>
 
 <body>
-    @if (Route::currentRouteName() == 'home')
+    @if (Route::currentRouteName() === 'home')
         <div class="hero-section">
             <header>
                 <div class="container navbar">
@@ -29,14 +29,15 @@
                             <li><a href="{{ route('properties.index') }}">Properties</a></li>
                             <li><a href="#">Services</a></li>
                             <li><a href="#">About</a></li>
-                            <li><a href="#">Contact</a></li>
+                            <li><a href="{{ route('contact') }}">Contact</a></li>
                             <li><a href="#" class="login-btn">Login</a></li>
                         </ul>
                     </nav>
                 </div>
             </header>
-            @yield('hero-content')
+            @yield('hero-content') {{-- For home and contact page hero sections --}}
         </div>
+        <main>@yield('content')</main>
     @else
         <header>
             <div class="container navbar">
@@ -48,17 +49,15 @@
                         <li><a href="{{ route('properties.index') }}">Properties</a></li>
                         <li><a href="#">Services</a></li>
                         <li><a href="#">About</a></li>
-                        <li><a href="#">Contact</a></li>
+                        <li><a href="{{ route('contact') }}">Contact</a></li>
                         <li><a href="#" class="login-btn">Login</a></li>
                     </ul>
                 </nav>
             </div>
         </header>
+        <main class="main-content">@yield('content')</main>
     @endif
 
-    <main class="main-content">
-        @yield('content')
-    </main>
 
     <footer class="footer-section">
       <div class="container footer-content">

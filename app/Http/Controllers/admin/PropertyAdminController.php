@@ -52,7 +52,7 @@ class PropertyAdminController extends Controller
             'hero_image'  => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
             'hero'        => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
 
-            'images'      => 'nullable|array',
+            'images'      => 'nullable|array|max:500', // Set a max number of files
             'images.*'    => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
         ]);
 
@@ -119,7 +119,7 @@ class PropertyAdminController extends Controller
             'hero_image'  => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
             'status'      => 'required|in:for_sale,for_rent,sold,rented',
             // allow gallery additions on update
-            'images'      => 'nullable|array',
+            'images'      => 'nullable|array|max:500', // Set a max number of files
             'images.*'    => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
         ]);
 
