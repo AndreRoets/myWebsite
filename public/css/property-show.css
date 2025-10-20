@@ -1,270 +1,290 @@
-/* ===============================
-   PROPERTY SHOW PAGE
-================================= */
+/* =========================================================
+   Property Show — Home Finders Coastal (sharp + gold theme)
+   Paste into: public/css/property-show.css
+   ========================================================= */
 
-/* --- Main Layout --- */
-.property-show-page {
-    display: grid;
+/* ---------- Theme ---------- */
+:root{
+  --navy-900:#0b1220;     /* page background */
+  --navy-800:#111a2b;     /* panels */
+  --navy-700:#152239;     /* subtle contrast */
+  --gold-500:#c0a87f;     /* primary accent */
+  --gold-400:#c0a87f;
+  --text-100:#e9edf4;     /* body text */
+  --text-300:#c9d1e0;     /* muted text */
+  --white:#fff;
+}
+
+html,body{
+  background: var(--navy-900);
+  color: var(--text-100);
+  font-family: "Montserrat", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  line-height: 1.55;
+}
+
+/* remove any default rounding globally on this page */
+.property-show-page *{
+  border-radius: 0 !important;
+}
+
+/* ---------- Page Layout ---------- */
+.property-show-page{
+  max-width: 1200px;
+  margin: 40px auto 80px;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 36px;
+}
+
+.property-details-main{
+  min-width: 0; /* prevent overflow from images */
+}
+
+.property-sidebar{
+  background: var(--navy-800);
+  border: 1px solid rgba(212,175,55,.35);
+  padding: 18px;
+  position: relative;
+}
+
+/* thin gold top rule like the mock */
+.property-show-page::before{
+  content:"";
+  display:block;
+  height: 2px;
+  background: linear-gradient(90deg,var(--gold-500),rgba(212,175,55,.2) 60%, transparent);
+  grid-column: 1 / -1;
+  margin-bottom: 8px;
+}
+
+/* ---------- Carousel / Hero ---------- */
+.carousel-container{
+  background: var(--navy-800);
+  border: 1px solid var(--gold-500);
+  box-shadow: 0 6px 22px rgba(0,0,0,.45);
+  overflow: hidden;
+  position: relative; /* This is the key change */
+}
+
+.carousel-slides{
+  position: relative;
+  aspect-ratio: 16 / 9; /* Set aspect ratio on the container */
+}
+.carousel-slide{
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.7s ease-in-out; /* Smooth fade transition */
+}
+.carousel-slide.active{ opacity: 1; }
+.carousel-slide img{
+  width:100%;
+  height:auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  display:block;
+  filter: saturate(.98) contrast(1.02);
+}
+
+/* prev/next — square, sharp, minimal */
+.carousel-control{
+  position:absolute; inset:0 auto 0 auto;
+  top: 50%; transform: translateY(-50%);
+  width:44px; height:44px;
+  background: rgba(11,18,32,.65);
+  border: 1px solid rgba(212,175,55,.5);
+  color: var(--white);
+  display:grid; place-items:center;
+  letter-spacing: .05em;
+  cursor:pointer;
+  transition: background .2s, border-color .2s, transform .12s;
+  user-select:none;
+  z-index: 10; /* Ensure buttons are on top of images */
+}
+.carousel-control.prev{ left:12px; }
+.carousel-control.next{ right:12px; }
+.carousel-control:hover{
+  background: rgba(11,18,32,.9);
+  border-color: var(--gold-500);
+}
+.carousel-control:active{ transform: translateY(-50%) scale(.98); }
+
+/* ---------- Title / Price ---------- */
+.location{
+  font-size: .9rem;
+  letter-spacing: .2em;
+  color: var(--text-300);
+  text-transform: uppercase;
+  margin: 22px 0 6px;
+}
+
+.property-title{
+  font-family: "Playfair Display", serif;
+  font-weight: 700;
+  font-size: clamp(28px, 3.2vw, 40px);
+  letter-spacing: .02em;
+  color: var(--text-100);
+  margin: 0 0 12px;
+}
+
+.price{
+  font-family: "Playfair Display", serif;
+  font-size: clamp(24px, 2.6vw, 34px);
+  color: var(--gold-500);
+  margin: 2px 0 8px;
+}
+
+/* thin gold divider */
+.divider{
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg,var(--gold-500),transparent);
+  margin: 20px 0 24px;
+}
+
+/* ---------- Summary line under price ---------- */
+.summary-text{
+  color: var(--text-300);
+  max-width: 60ch;
+}
+
+/* ---------- Stats Row ---------- */
+.property-stats{
+  display:flex;
+  align-items: center;
+  gap: 34px;
+}
+.stat-item{
+  display:flex; align-items:center; gap:12px;
+  color: var(--text-100);
+}
+.stat-item i,
+.stat-item svg{
+  width: 22px; height: 22px;
+  stroke: var(--gold-500);
+}
+.stat-value{
+  font-weight: 600;
+  letter-spacing:.03em;
+}
+.stat-label{
+  font-size: .8rem; color: var(--text-300); margin-top: 2px;
+}
+
+/* ---------- Description ---------- */
+.property-description p{
+  color: var(--text-300);
+  text-align: justify;
+}
+
+/* ---------- Sidebar ---------- */
+.schedule-btn{
+  display:block;
+  width:100%;
+  text-align:center;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  font-weight: 700;
+  background: var(--gold-500);
+  color: #1a1a1a;
+  padding: 14px 16px;
+  border: 1px solid var(--gold-500);
+  margin-bottom: 18px;
+  transition: filter .15s, background .15s;
+}
+.schedule-btn:hover{ filter: brightness(1.05); }
+
+/* media cards (Virtual Tour / Video Walkthrough) */
+.media-links{ display:grid; gap: 14px; margin: 8px 0 18px; }
+
+.media-link-item .media-label{
+  font-size:.8rem; letter-spacing:.18em; text-transform:uppercase;
+  color: var(--text-300); margin: 8px 0 6px;
+}
+
+.media-card{
+  display:flex; align-items:center; gap:14px;
+  background: var(--navy-900);
+  border: 1px solid rgba(212,175,55,.55);
+  padding: 8px;
+}
+.media-thumbnail{
+  width: 112px; height: 62px;
+  background: linear-gradient(180deg,#121a2c,#0c1424);
+  border: 1px solid rgba(212,175,55,.45);
+  display:grid; place-items:center;
+  position: relative;
+  overflow:hidden;
+}
+.media-thumbnail i,
+.media-thumbnail svg{ width: 22px; height: 22px; color: var(--gold-500); }
+.media-title{
+  font-weight:600; color: var(--text-100);
+  text-transform: uppercase; letter-spacing:.09em;
+}
+
+/* Map block */
+.map-container{ margin-top: 20px; }
+.map-label{
+  font-size:.8rem; letter-spacing:.18em; text-transform:uppercase;
+  color: var(--text-300); margin-bottom:6px;
+}
+.map-placeholder{
+  border:1px solid rgba(212,175,55,.5);
+  background: var(--navy-900);
+  padding: 6px;
+}
+.map-placeholder img{ width:100%; display:block; }
+
+/* ---------- Header/Footer tweaks to match look ---------- */
+header, .footer-section{
+  background: transparent;
+  color: var(--text-100);
+}
+
+.navbar .nav-links a{
+  color: var(--text-100);
+  text-transform: none;
+  letter-spacing: .04em;
+}
+.navbar .nav-links a:hover{
+  color: var(--gold-500);
+}
+
+/* Bottom footer thin gold line */
+.footer-section .footer-bottom{
+  border-top: 1px solid rgba(212,175,55,.35);
+}
+
+/* ---------- Gold outlines for images in sidebar cards if you add thumbs ---------- */
+.media-card img{
+  display:block; width:112px; height:62px; object-fit:cover;
+  border:1px solid rgba(212,175,55,.45);
+}
+
+/* ---------- Utilities ---------- */
+.gold-outline{
+  border: 1px solid var(--gold-500) !important;
+}
+.gold-text{ color: var(--gold-500) !important; }
+.upper{ text-transform: uppercase; letter-spacing: .12em; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px){
+  .property-show-page{
+    grid-template-columns: 1fr 300px;
+  }
+}
+@media (max-width: 900px){
+  .property-show-page{
     grid-template-columns: 1fr;
-    min-height: calc(100vh - 80px); /* Adjust based on your header height */
-}
-
-@media (min-width: 1024px) {
-    .property-show-page {
-        grid-template-columns: 3fr 1fr;
-    }
-}
-
-/* --- Left Column: Main Details --- */
-.property-details-main {
-    padding: 24px;
-}
-
-@media (min-width: 1024px) {
-    .property-details-main {
-        padding: 48px;
-    }
-}
-
-.property-hero-image {
-    aspect-ratio: 16 / 9;
-    background-color: var(--darker-blue);
-    border-radius: 0.5rem;
-    overflow: hidden;
-    position: relative;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
-}
-
-.property-hero-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.8;
-}
-
-.property-hero-image .gradient-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
-}
-
-.property-details-main .content-container {
-    margin-top: 48px;
-    max-width: 56rem; /* max-w-4xl */
-}
-
-.title-price-row {
-    display: flex;
-    flex-direction: column;
-}
-
-@media (min-width: 768px) {
-    .title-price-row {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: flex-end;
-    }
-}
-
-.title-price-row .location {
-    font-size: 0.75rem;
-    color: var(--gold-accent);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 4px;
-}
-
-.title-price-row .property-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 3rem; /* text-5xl */
-    font-weight: 300;
-    letter-spacing: 2px;
-    margin-bottom: 8px;
-}
-
-.title-price-row .price {
-    font-size: 1.875rem; /* text-3xl */
-    font-weight: 300;
-    color: var(--gold-accent);
-}
-
-.title-price-row .summary-text {
-    font-size: 0.875rem;
-    color: var(--text-muted);
-    font-style: italic;
-    margin-top: 16px;
-    max-width: 20rem;
-}
-
-@media (min-width: 768px) {
-    .title-price-row .summary-text {
-        margin-top: 0;
-        text-align: right;
-    }
-}
-
-.divider {
-    border-color: rgba(255, 255, 255, 0.1);
-    margin: 32px 0;
-}
-
-.property-stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 32px;
-    text-align: center;
-    color: var(--text-light);
-}
-
-.stat-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.stat-item i {
-    width: 24px;
-    height: 24px;
-    color: var(--gold-accent);
-}
-
-.stat-item .stat-value {
-    font-size: 1.5rem;
-    font-weight: 300;
-}
-
-.stat-item .stat-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    margin-top: 2px;
-}
-
-.property-description {
-    color: var(--text-muted);
-    line-height: 1.6;
-    font-size: 0.9rem;
-}
-
-.property-description p {
-    margin-bottom: 16px;
-}
-
-/* --- Right Column: Sidebar --- */
-.property-sidebar {
-    padding: 24px;
-    border-left: 1px solid rgba(255, 255, 255, 0.1);
-    display: flex;
-    flex-direction: column;
-    gap: 32px;
-}
-
-@media (min-width: 1024px) {
-    .property-sidebar {
-        padding: 32px;
-    }
-}
-
-.sidebar-header {
-    text-align: right;
-}
-
-.sidebar-header i {
-    width: 24px;
-    height: 24px;
-    color: var(--gold-accent);
-    display: inline-block;
-}
-
-.schedule-btn {
-    width: 100%;
-    padding: 12px 0;
-    background-color: var(--navy-blue);
-    color: var(--gold-accent);
-    text-transform: uppercase;
-    font-size: 0.875rem;
-    font-weight: 600;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3);
-    transition: background-color 0.2s ease;
-}
-
-.schedule-btn:hover {
-    background-color: #2a3042;
-}
-
-.media-links {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-
-.media-link-item .media-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-}
-
-.media-link-item .media-card {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background-color: var(--darker-blue);
-    padding: 12px;
-    border-radius: 0.5rem;
-    transition: background-color 0.2s ease;
-}
-
-.media-link-item .media-card:hover {
-    background-color: var(--navy-blue);
-}
-
-.media-link-item .media-thumbnail {
-    width: 80px;
-    height: 56px;
-    background-color: #374151;
-    position: relative;
-    border-radius: 0.25rem;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.media-link-item .media-thumbnail i {
-    width: 24px;
-    height: 24px;
-    color: white;
-    opacity: 0.7;
-}
-
-.media-link-item .media-title {
-    font-size: 0.875rem;
-    font-weight: 300;
-}
-
-.map-container .map-label {
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--gold-accent);
-    margin-bottom: 12px;
-}
-
-.map-container .map-placeholder {
-    aspect-ratio: 1 / 1;
-    width: 100%;
-    background-color: var(--darker-blue);
-    border-radius: 0.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    overflow: hidden;
-    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5), 0 4px 6px -2px rgba(0,0,0,0.25);
-}
-
-.map-container .map-placeholder img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.8;
+    gap: 28px;
+  }
+  .property-sidebar{
+    order: 2;
+  }
 }

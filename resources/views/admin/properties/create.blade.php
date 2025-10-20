@@ -19,6 +19,11 @@
         .flex-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
     </style>
 </head>
+<style>
+    .header-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    .header-nav a { text-decoration: none; background-color: #6c757d; color: white; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; }
+    .header-nav a:hover { background-color: #5a6268; }
+</style>
 <body>
     <div class="container">
         <h1>Create New Property</h1>
@@ -33,6 +38,8 @@
                 </ul>
             </div>
         @endif
+
+        <a href="{{ route('admin.properties.list') }}" style="display: inline-block; margin-bottom: 1.5rem;">&larr; Back to All Properties</a>
 
         <form action="{{ route('admin.properties.store') }}" method="POST" enctype="multipart/form-data">
             @csrf

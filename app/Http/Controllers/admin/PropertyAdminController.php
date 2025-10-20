@@ -15,7 +15,9 @@ class PropertyAdminController extends Controller
      */
     public function index()
     {
-        $properties = Property::latest()->paginate(10);
+        $properties = Property::whereIn('status', ['for_sale', 'for_rent'])
+            ->latest()
+            ->paginate(10);
         return view('admin.properties.index', compact('properties'));
     }
 
@@ -115,6 +117,7 @@ class PropertyAdminController extends Controller
             'suburb'      => 'required|string|max:255',
 
             'hero_image'  => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
+            'status'      => 'required|in:for_sale,for_rent,sold,rented',
             // allow gallery additions on update
             'images'      => 'nullable|array',
             'images.*'    => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',

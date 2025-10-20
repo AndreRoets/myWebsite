@@ -120,7 +120,7 @@
                 <label for="hero">Hero Image (Main Picture)</label>
                 @if($property->hero_image)
                     <div class="image-preview">
-                        <img src="{{ asset('storage/' . $property->hero_image) }}" alt="Hero Image">
+                        <img src="{{ asset('storage/' . $property->hero_image) }}" alt="Hero Image" style="max-width: 200px;">
                     </div>
                 @endif
                 <input type="file" id="hero" name="hero" accept="image/webp,image/jpeg,image/png">

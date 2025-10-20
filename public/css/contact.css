@@ -1,0 +1,277 @@
+/* ===============================
+   Home Finders Coastal — Page Styles
+   (screenshot-matched theme)
+   =============================== */
+
+/* ---------- CSS Variables ---------- */
+:root{
+  --dark-blue: #0d1b2a;        /* page background */
+  --navy-blue: #0f2437;        /* panels / header */
+  --navy-900: #0b1a29;
+  --navy-800: #10273e;
+  --gold-accent: #c6a768;      /* primary accent */
+  --gold-soft: #b79a5f;
+  --text-light: #e8edf2;
+  --text-dim: #c0c7d2;
+  --muted: #2a3b52;
+  --line: rgba(198,167,104,.35);
+  --shadow: 0 8px 24px rgba(0,0,0,.35);
+}
+
+/* ---------- Resets & Base ---------- */
+*,
+*::before,
+*::after{ box-sizing: border-box; }
+
+body.contact-page-body {
+  height: 100%;
+  background: linear-gradient(180deg, var(--navy-900), var(--dark-blue));
+  color: var(--text-light);
+  font-family: "Montserrat", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+}
+
+h1,h2,h3,.display{
+  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+  letter-spacing: .2px;
+  color: #fff;
+}
+
+a{ color: var(--text-light); text-decoration: none; }
+img{ max-width: 100%; display: block; }
+
+/* ---------- Layout Utilities ---------- */
+.container{
+  width: min(1120px, 92vw);
+  margin-inline: auto;
+}
+.stack-16{ display:grid; gap:16px; }
+.stack-24{ display:grid; gap:24px; }
+.gold{ color: var(--gold-accent); }
+.gold-line{
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0, var(--line) 20%, var(--line) 80%, transparent 100%);
+  border: 0; margin: 14px 0;
+}
+.card{
+  background: linear-gradient(180deg, var(--navy-blue), #0e2133);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: clip;
+}
+
+/* ===============================
+   Header / Top Nav
+   =============================== */
+.header{
+  position: sticky; top: 0; z-index: 50;
+  background: linear-gradient(180deg, #0f1f32, rgba(15,31,50,.85));
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(6px);
+}
+.nav{
+  display: grid; grid-template-columns: auto 1fr auto;
+  align-items: center; gap: 18px; height: 72px;
+}
+.logo{
+  display:flex; align-items:center; gap:10px; font-weight:700;
+  color:#fff;
+}
+.nav-links{
+  display:flex; justify-content:center; gap:28px;
+}
+.nav-links a{
+  font-weight:500; color: var(--text-dim);
+  padding: 8px 2px; border-bottom: 2px solid transparent;
+  transition: color .2s, border-color .2s;
+}
+.nav-links a:hover{ color:#fff; border-color: var(--gold-accent); }
+
+.login-btn{
+  padding: 8px 14px; border-radius: 10px;
+  border: 1px solid var(--gold-accent);
+  color: var(--gold-accent); font-weight:600;
+  background: transparent;
+  transition: background .2s, color .2s, transform .05s;
+}
+.login-btn:hover{ background: rgba(198,167,104,.1); }
+.login-btn:active{ transform: translateY(1px); }
+
+/* ===============================
+   Hero
+   =============================== */
+.hero{
+  position: relative; isolation: isolate;
+  padding: 54px 0 28px;
+}
+.hero .hero-frame{
+  position: relative; border-radius: 14px; overflow: clip;
+  border: 1px solid var(--line); box-shadow: var(--shadow);
+}
+.hero .bg{
+  position:absolute; inset:0;
+  background:
+     linear-gradient(180deg, rgba(12,22,35,.25) 0%, rgba(12,22,35,.65) 65%, rgba(12,22,35,.85) 100%),
+     url("/Image/Hero.webp") center/cover no-repeat;
+  filter: saturate(.9);
+  z-index: 0;
+}
+.hero .content{
+  position: relative; z-index: 1;
+  padding: clamp(36px, 6vw, 72px);
+  display:grid; justify-items:start; gap:16px;
+}
+.hero h1{
+  font-size: clamp(34px, 3.8vw, 52px);
+  font-weight: 700;
+  text-shadow: 0 4px 20px rgba(0,0,0,.5);
+}
+.hero p{
+  color: var(--text-dim);
+  font-size: clamp(14px, 1.5vw, 16px);
+}
+.cta{
+  display:inline-block;
+  margin-top: 8px;
+  padding: 12px 22px;
+  background: radial-gradient(120% 120% at 50% 0, #efdfb9 0, var(--gold-accent) 35%, #a18141 100%);
+  color:#1b2433; font-weight:800; letter-spacing:.4px;
+  border: 1px solid rgba(0,0,0,.25);
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(198,167,104,.25), inset 0 1px 0 rgba(255,255,255,.35);
+  transition: transform .08s ease, filter .2s ease;
+}
+.cta:hover{ filter: brightness(1.05); }
+.cta:active{ transform: translateY(2px); }
+
+/* ===============================
+   Contact Split (Form + Info)
+   =============================== */
+.contact{
+  display:grid; grid-template-columns: 1fr 1fr; gap: 28px;
+  margin-top: 28px;
+}
+.panel{ padding: 22px; }
+.panel h3{
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 22px; margin: 2px 0 12px; color: #f5f6f8;
+}
+
+/* ---- Left: Form ---- */
+.form-grid{ display:grid; gap: 12px; }
+.label{ font-size: 12px; color: var(--text-dim); text-transform: none; }
+.input, .textarea, select{
+  width: 100%;
+  color: #f7f9ff;
+  background: rgba(12,24,38,.55);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  outline: none; transition: border-color .2s, box-shadow .2s, background .2s;
+}
+.input::placeholder, .textarea::placeholder{ color: #98a6bb; }
+.input:focus, .textarea:focus, select:focus{
+  border-color: var(--gold-accent);
+  box-shadow: 0 0 0 3px rgba(198,167,104,.18);
+  background: rgba(17,35,55,.7);
+}
+.textarea{ min-height: 104px; resize: vertical; }
+
+.btn-primary{
+  width: 100%;
+  padding: 12px 18px;
+  background: linear-gradient(180deg, #f2e3bf, var(--gold-accent));
+  color: #172234; font-weight: 800; letter-spacing:.3px;
+  border: 1px solid rgba(0,0,0,.25);
+  border-radius: 10px; cursor: pointer;
+  box-shadow: 0 8px 20px rgba(198,167,104,.25);
+  transition: transform .08s, filter .2s;
+}
+.btn-primary:hover{ filter: brightness(1.05); }
+.btn-primary:active{ transform: translateY(2px); }
+
+/* ---- Right: Contact Info ---- */
+.info-block{
+  display:grid; gap:14px; color: var(--text-dim);
+  line-height: 1.6;
+}
+.info-title{
+  font-family: "Playfair Display", serif; color:#fff; font-size: 18px;
+}
+.kv{
+  display:grid; grid-template-columns: 90px 1fr; gap: 10px;
+}
+.kv .k{ color:#aeb8c7; }
+.kv .v{ color:#e8edf2; }
+
+/* Divider inside cards */
+.panel hr{ border: none; height:1px; background: var(--line); margin:10px 0 2px; }
+
+/* ===============================
+   Footer
+   =============================== */
+.footer{
+  margin: 34px 0 18px;
+}
+.footer .world{
+  width: 100%; aspect-ratio: 16/5;
+  background:
+    radial-gradient(8px 8px at 20% 80%, var(--gold-accent), transparent 60%),
+    radial-gradient(8px 8px at 50% 60%, var(--gold-accent), transparent 60%),
+    radial-gradient(8px 8px at 77% 70%, var(--gold-accent), transparent 60%),
+    linear-gradient(180deg, #0e2133, #0a1928);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  opacity:.9;
+}
+.footer .meta{
+  margin-top: 12px;
+  display:flex; align-items:center; justify-content:center; gap:22px;
+  color: var(--text-dim); font-size: 14px;
+}
+.footer .meta a:hover{ color:#fff; }
+
+/* Social icons */
+.social{
+  display:flex; gap:14px; align-items:center;
+}
+.social a{
+  width: 36px; height: 36px; display:grid; place-items:center;
+  border-radius: 999px; border: 1px solid var(--line);
+  transition: border-color .2s, transform .08s;
+}
+.social a:hover{ border-color: var(--gold-accent); transform: translateY(-1px); }
+
+/* ===============================
+   Tables (if used in info panel)
+   =============================== */
+.table{
+  width:100%; border-collapse: collapse; color: var(--text-dim);
+  font-size: 14px;
+}
+.table td{ padding: 8px 0; border-bottom: 1px dashed var(--line); }
+.table td:first-child{ color:#aeb8c7; width: 110px; }
+
+/* ===============================
+   Responsive
+   =============================== */
+@media (max-width: 1100px){
+  .nav-links{ gap: 18px; }
+  .container{ width: min(1000px, 94vw); }
+}
+@media (max-width: 900px){
+  .contact{ grid-template-columns: 1fr; }
+  .nav{ grid-template-columns: auto 1fr auto; }
+}
+@media (max-width: 720px){
+  .nav{ grid-template-columns: 1fr auto; gap:10px; }
+  .nav-links{ display:none; } /* collapse links for small screens; replace with menu if needed */
+  .hero{ padding-top: 36px; }
+  .panel{ padding: 18px; }
+  .footer .meta{ flex-wrap: wrap; gap: 12px; }
+}
+@media (max-width: 420px){
+  .btn-primary, .cta{ font-size: 14px; }
+  .kv{ grid-template-columns: 84px 1fr; }
+}
