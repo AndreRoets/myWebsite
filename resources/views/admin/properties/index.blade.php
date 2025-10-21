@@ -5,23 +5,7 @@
 
 @section('content')
     @push('styles')
-    <style>
-        .alert-success { background-color: #d4edda; color: #155724; padding: 1rem; border: 1px solid #c3e6cb; border-radius: 4px; margin-bottom: 1rem; }
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #dee2e6; }
-        th { background-color: #e9ecef; }
-        .actions { display: flex; gap: 0.5rem; }
-        .btn { padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; color: white; border: none; cursor: pointer; font-size: 0.875rem; }
-        .btn-primary { background-color: #007bff; }
-        .btn-primary:hover { background-color: #0056b3; }
-        .btn-danger { background-color: #dc3545; }
-        .btn-danger:hover { background-color: #c82333; }
-        .btn-create { display: inline-block; margin-bottom: 1rem; background-color: #28a745; }
-        .btn-create:hover { background-color: #218838; }
-        .pagination { margin-top: 1.5rem; }
-        img { max-width: 100px; height: auto; border-radius: 4px; }
-    </style>
+    {{-- Page-specific styles can go here if needed --}}
     @endpush
 
     @if (session('success'))

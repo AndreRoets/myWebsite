@@ -5,20 +5,7 @@
 
 @section('content')
     @push('styles')
-    <style>
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; margin-bottom: 0.25rem; }
-        input, select, textarea { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .error { color: red; font-size: 0.875rem; }
-        button { padding: 0.75rem 1.5rem; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .container { max-width: 800px; margin: auto; }
-        input.is-invalid, select.is-invalid, textarea.is-invalid {
-            border-color: red;
-        } 
-        .flex-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
-        .back-link { display: inline-block; margin-bottom: 1.5rem; color: #007bff; text-decoration: none; }
-        .back-link:hover { text-decoration: underline; }
-    </style>
+    {{-- Page-specific styles can go here if needed --}}
     @endpush
     
         @if ($errors->any())
