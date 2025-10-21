@@ -1,0 +1,130 @@
+/* ===============================
+   Agent Profile Page (Sharp Theme)
+   =============================== */
+:root {
+    --navy-900: #0b1220;
+    --navy-800: #111a2b;
+    --gold-500: #c0a87f;
+    --text-100: #e9edf4;
+    --text-300: #c9d1e0;
+    --shadow: 0 8px 25px rgba(0,0,0,.4);
+}
+
+body {
+    background: var(--navy-900);
+    color: var(--text-100);
+    font-family: "Montserrat", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+}
+
+.agent-profile-container {
+    width: min(900px, 94vw);
+    margin: 40px auto 80px;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 2rem;
+    color: var(--gold-500);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.back-link:hover {
+    color: var(--text-100);
+}
+
+.agent-profile-card {
+    background: var(--navy-800);
+    border: 1px solid rgba(192, 168, 127, 0.35);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.agent-profile__image-wrapper {
+    width: 100%;
+    aspect-ratio: 16 / 9; /* Or 4/3, depending on desired look */
+    background-color: var(--navy-900);
+    overflow: hidden;
+}
+
+.agent-profile__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.agent-profile__details {
+    padding: 2rem;
+}
+
+.agent-profile__name {
+    font-family: "Playfair Display", Georgia, serif;
+    font-weight: 700;
+    font-size: clamp(28px, 4vw, 38px);
+    letter-spacing: .02em;
+    margin: 0 0 0.5rem;
+    color: var(--text-100);
+}
+
+.agent-profile__title {
+    font-size: 1rem;
+    color: var(--gold-500);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-bottom: 1.5rem;
+}
+
+.agent-profile__description {
+    color: var(--text-300);
+    margin-bottom: 2rem;
+}
+
+.contact-info__heading {
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 1.5rem;
+    color: var(--text-100);
+    margin-bottom: 1rem;
+}
+
+.contact-info__item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-300);
+}
+
+.contact-info__item a {
+    color: var(--text-300);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+.contact-info__item a:hover {
+    color: var(--gold-500);
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+    .agent-profile-card {
+        flex-direction: row;
+    }
+    .agent-profile__image-wrapper {
+        width: 40%; /* Adjust as needed */
+        aspect-ratio: 1 / 1; /* Make it square for a side-by-side layout */
+    }
+    .agent-profile__details {
+        width: 60%; /* Adjust as needed */
+        padding: 2rem 2.5rem;
+    }
+}
+
+@media (max-width: 767px) {
+    .agent-profile__image-wrapper {
+        aspect-ratio: 16 / 9; /* Keep wider image on smaller screens */
+    }
+}

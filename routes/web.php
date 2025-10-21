@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\PropertyAdminController;
 Route::get('/', fn() => view('home'))->name('home');
 
 Route::get('/agents', [AgentController::class, 'index'])->name('agents.index');
+Route::get('/agents/{agent}', [AgentController::class, 'show'])->name('agents.show'); // New route for agent profile
 
 Route::prefix('properties')->group(function () {
     Route::get('/', [PropertyController::class, 'index'])->name('properties.index');

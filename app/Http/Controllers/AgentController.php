@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Agent;
 
 class AgentController extends Controller
@@ -12,10 +11,18 @@ class AgentController extends Controller
      */
     public function index()
     {
-        $agents = Agent::latest()->get();
+        $agents = Agent::all(); // Or use pagination: Agent::paginate(10);
+        return view('agents.index', compact('agents'));
+    }
 
-        return view('agents.index', [
-            'agents' => $agents
-        ]);
+    /**
+     * Display the specified agent.
+     *
+     * @param  \App\Models\Agent  $agent
+     * @return \Illuminate\View\View
+     */
+    public function show(Agent $agent)
+    {
+        return view('agents.show', compact('agent'));
     }
 }

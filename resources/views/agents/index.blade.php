@@ -15,7 +15,8 @@
 
     <div class="agents-grid">
         @foreach($agents as $agent)
-            <div class="agent-card">
+            {{-- Make the entire card a link to the agent's profile page --}}
+            <a href="{{ route('agents.show', $agent) }}" class="agent-card">
                 <div class="agent-card__image-wrapper">
                     <img src="{{ $agent->image ? asset('storage/' . $agent->image) : asset('Image/agent-placeholder.webp') }}" alt="{{ $agent->name ?? 'Agent' }}">
                 </div>
@@ -24,10 +25,11 @@
                     <p class="agent-card__title">{{ $agent->title }}</p>
                 </div>
                 <div class="agent-card__contact">
-                    <a href="mailto:{{ $agent->email }}">{{ $agent->email }}</a>
-                    <a href="tel:{{ str_replace(' ', '', $agent->phone) }}">{{ $agent->phone }}</a>
+                    {{-- Display contact info as text; actual clickable links will be on the agent's profile page --}}
+                    <span>{{ $agent->email }}</span>
+                    <span>{{ $agent->phone }}</span>
                 </div>
-            </div>
+            </a>
         @endforeach
     </div>
 </div>
