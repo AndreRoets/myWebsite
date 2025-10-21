@@ -28,7 +28,7 @@
                         <ul class="nav-links">
                             <li><a href="{{ route('properties.index') }}">Properties</a></li>
                             <li><a href="#">Services</a></li>
-                            <li><a href="#">About</a></li>
+                            <li><a href="{{ route('agents.index') }}">Agents</a></li>
                             <li><a href="{{ route('contact') }}">Contact</a></li>
                             <li><a href="#" class="login-btn">Login</a></li>
                         </ul>
@@ -48,7 +48,7 @@
                     <ul class="nav-links">
                         <li><a href="{{ route('properties.index') }}">Properties</a></li>
                         <li><a href="#">Services</a></li>
-                        <li><a href="#">About</a></li>
+                        <li><a href="{{ route('agents.index') }}">Agents</a></li>
                         <li><a href="{{ route('contact') }}">Contact</a></li>
                         <li><a href="#" class="login-btn">Login</a></li>
                     </ul>
@@ -75,6 +75,7 @@
         <p>&copy; {{ date('Y') }} Home Finders Coastal. All Rights Reserved.</p>
         <nav>
           <ul class="footer-nav">
+            <li><a href="{{ route('agents.index') }}">Agents</a></li>
             <li><a href="#">Privacy Policy</a></li>
             <li><a href="#">Terms of Service</a></li>
           </ul>

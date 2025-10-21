@@ -1,13 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Properties</title>
+@extends('admin.layouts.app')
+
+@section('title', 'Manage Properties')
+@section('page-title', 'Manage Properties')
+
+@section('content')
+    @push('styles')
     <style>
-        body { font-family: sans-serif; margin: 2rem; background-color: #f8f9fa; color: #333; }
-        .container { max-width: 1200px; margin: auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { margin-bottom: 1.5rem; }
         .alert-success { background-color: #d4edda; color: #155724; padding: 1rem; border: 1px solid #c3e6cb; border-radius: 4px; margin-bottom: 1rem; }
         .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
@@ -24,12 +22,9 @@
         .pagination { margin-top: 1.5rem; }
         img { max-width: 100px; height: auto; border-radius: 4px; }
     </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Manage Properties</h1>
+    @endpush
 
-        @if (session('success'))
+    @if (session('success'))
             <div class="alert-success">
                 {{ session('success') }}
             </div>
@@ -86,6 +81,4 @@
         <div class="pagination">
             {{ $properties->links() }}
         </div>
-    </div>
-</body>
-</html>
+@endsection

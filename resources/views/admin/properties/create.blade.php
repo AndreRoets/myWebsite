@@ -1,11 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create New Property</title>
+@extends('admin.layouts.app')
+
+@section('title', 'Create New Property')
+@section('page-title', 'Create New Property')
+
+@section('content')
+    @push('styles')
     <style>
-        body { font-family: sans-serif; margin: 2rem; }
         .form-group { margin-bottom: 1rem; }
         label { display: block; margin-bottom: 0.25rem; }
         input, select, textarea { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
@@ -14,20 +14,13 @@
         .container { max-width: 800px; margin: auto; }
         input.is-invalid, select.is-invalid, textarea.is-invalid {
             border-color: red;
-        }
-        h1 { margin-bottom: 2rem; }
+        } 
         .flex-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .back-link { display: inline-block; margin-bottom: 1.5rem; color: #007bff; text-decoration: none; }
+        .back-link:hover { text-decoration: underline; }
     </style>
-</head>
-<style>
-    .header-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-    .header-nav a { text-decoration: none; background-color: #6c757d; color: white; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; }
-    .header-nav a:hover { background-color: #5a6268; }
-</style>
-<body>
-    <div class="container">
-        <h1>Create New Property</h1>
-
+    @endpush
+    
         @if ($errors->any())
             <div style="color: red; margin-bottom: 1rem;">
                 <strong>Whoops! Something went wrong.</strong>
@@ -39,7 +32,7 @@
             </div>
         @endif
 
-        <a href="{{ route('admin.properties.list') }}" style="display: inline-block; margin-bottom: 1.5rem;">&larr; Back to All Properties</a>
+        <a href="{{ route('admin.properties.list') }}" class="back-link">&larr; Back to All Properties</a>
 
         <form action="{{ route('admin.properties.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
@@ -173,6 +166,4 @@
             
             <button type="submit">Create Property</button>
         </form>
-    </div>
-</body>
-</html>
+@endsection

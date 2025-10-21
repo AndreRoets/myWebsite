@@ -1,11 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Property: {{ $property->title }}</title>
+@extends('admin.layouts.app')
+
+@section('title', 'Edit Property')
+@section('page-title', 'Edit Property: ' . $property->title)
+
+@section('content')
+    @push('styles')
     <style>
-        body { font-family: sans-serif; margin: 2rem; }
         .form-group { margin-bottom: 1rem; }
         label { display: block; margin-bottom: 0.25rem; }
         input, select, textarea { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
@@ -13,18 +13,15 @@
         button { padding: 0.75rem 1.5rem; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
         .container { max-width: 800px; margin: auto; }
         h1 { margin-bottom: 2rem; }
-        .flex-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .flex-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; } 
         .image-preview { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
         .image-preview img { max-width: 150px; height: auto; border: 1px solid #ddd; padding: 2px; }
+        .back-link { display: inline-block; margin-bottom: 1.5rem; color: #007bff; text-decoration: none; }
+        .back-link:hover { text-decoration: underline; }
     </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Edit Property: {{ $property->title }}</h1>
+    @endpush
 
-        @if (session('ok'))
-            <div style="color: green; margin-bottom: 1rem;">{{ session('ok') }}</div>
-        @endif
+    <a href="{{ route('admin.properties.list') }}" class="back-link">&larr; Back to All Properties</a>
 
         @if ($errors->any())
             <div style="color: red; margin-bottom: 1rem;">
@@ -140,6 +137,4 @@
 
             <button type="submit">Update Property</button>
         </form>
-    </div>
-</body>
-</html>
+@endsection
