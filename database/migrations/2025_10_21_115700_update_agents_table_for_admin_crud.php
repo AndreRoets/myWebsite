@@ -38,15 +38,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // For SQLite, it's safer to drop the index before the column.
+        // We can use a separate Schema block to ensure the index is dropped first.
         Schema::table('agents', function (Blueprint $table) {
-            // The columns to drop.
-            $columns = ['name', 'title', 'email', 'description', 'phone', 'image'];
-
-            foreach ($columns as $column) {
-                if (Schema::hasColumn('agents', $column)) {
-                    $table->dropColumn($column);
-                }
-            }
+            $table->dropUnique('agents_email_unique');
         });
+        Schema::table('agents', fn (Blueprint $table) => $table->dropColumn(['name', 'title', 'email', 'description', 'phone', 'image']));
     }
 };

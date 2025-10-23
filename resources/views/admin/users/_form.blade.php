@@ -7,6 +7,8 @@
     .form-group .error-message { color: #dc3545; font-size: 0.875em; margin-top: 0.25rem; }
     .btn-submit { background-color: #28a745; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; }
     .btn-submit:hover { background-color: #218838; }
+    .form-check { display: flex; align-items: center; gap: 0.5rem; }
+    .form-check input { width: auto; }
 </style>
 @endpush
 
@@ -27,6 +29,15 @@
             <label for="email">Email</label>
             <input type="email" id="email" name="email" value="{{ old('email', $user->email ?? '') }}" required>
             @error('email') <div class="error-message">{{ $message }}</div> @enderror
+        </div>
+
+        <div class="form-group">
+            <div class="form-check">
+                <input type="hidden" name="is_admin" value="0">
+                <input type="checkbox" id="is_admin" name="is_admin" value="1" @checked(old('is_admin', $user->is_admin ?? false) == 1)>
+                <label for="is_admin">Make this user an Administrator</label>
+            </div>
+            @error('is_admin') <div class="error-message">{{ $message }}</div> @enderror
         </div>
 
         {{-- Add password fields if you want to allow password changes --}}
