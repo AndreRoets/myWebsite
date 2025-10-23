@@ -13,6 +13,79 @@
     <!-- Styles -->
     <link rel="stylesheet" href="{{ asset('css/home.css') }}">
     
+    <style>
+        /* Modal Styles */
+        .auth-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .auth-modal {
+            background: var(--navy-900, #111827);
+            color: var(--text-100, #f1f1f1);
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 450px;
+            position: relative;
+            border: 1px solid var(--gold-500, #c0a87f);
+        }
+        .auth-modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-100);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .auth-modal-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--gold-500);
+            margin-bottom: 1.5rem;
+        }
+        .auth-modal-tabs button {
+            flex: 1;
+            padding: 0.75rem;
+            background: none;
+            border: none;
+            color: var(--text-300, #ccc);
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-family: "Playfair Display", serif;
+            transition: color 0.3s;
+        }
+        .auth-modal-tabs button.active {
+            color: var(--gold-500);
+            border-bottom: 2px solid var(--gold-500);
+        }
+        .auth-modal-content {
+            display: none;
+        }
+        .auth-modal-content.active {
+            display: block;
+        }
+        .auth-modal form .form-group {
+            margin-bottom: 1rem;
+        }
+        .auth-modal form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-200);
+        }
+        .auth-modal form input {
+            width: 100%;
+            padding: 0.75rem;
+        }
+    </style>
     @stack('styles')
 </head>
 
@@ -30,7 +103,11 @@
                             <li><a href="#">Services</a></li>
                             <li><a href="{{ route('agents.index') }}">Agents</a></li>
                             <li><a href="{{ route('contact') }}">Contact</a></li>
-                            <li><a href="#" class="login-btn">Login</a></li>
+                            @guest
+                                <li><a href="#" class="login-btn" id="login-btn-hero">Login</a></li>
+                            @else
+                                <li><a href="{{ route('profile.show') }}">Profile</a></li>
+                            @endguest
                         </ul>
                     </nav>
                 </div>
@@ -50,7 +127,11 @@
                         <li><a href="#">Services</a></li>
                         <li><a href="{{ route('agents.index') }}">Agents</a></li>
                         <li><a href="{{ route('contact') }}">Contact</a></li>
-                        <li><a href="#" class="login-btn">Login</a></li>
+                        @guest
+                            <li><a href="#" class="login-btn" id="login-btn-main">Login</a></li>
+                        @else
+                            <li><a href="{{ route('profile.show') }}">Profile</a></li>
+                        @endguest
                     </ul>
                 </nav>
             </div>
@@ -58,6 +139,70 @@
         <main class="main-content">@yield('content')</main>
     @endif
 
+    {{-- Login/Register Modal --}}
+    <div class="auth-modal-overlay" id="auth-modal-overlay">
+        <div class="auth-modal" id="auth-modal">
+            <button class="auth-modal-close" id="auth-modal-close">&times;</button>
+
+            <div class="auth-modal-tabs">
+                <button id="login-tab-btn" class="active">Login</button>
+                <button id="register-tab-btn">Register</button>
+            </div>
+
+            {{-- Login Form --}}
+            <div id="login-content" class="auth-modal-content active">
+                <form method="POST" action="{{ route('login') }}">
+                    @csrf
+                    <div class="form-group">
+                        <label for="login-email">{{ __('Email Address') }}</label>
+                        <input id="login-email" type="email" name="email" required autocomplete="email" autofocus>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">{{ __('Password') }}</label>
+                        <input id="login-password" type="password" name="password" required autocomplete="current-password">
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="hero-btn" style="width: 100%;">{{ __('Login') }}</button>
+                    </div>
+                    @if (Route::has('password.request'))
+                        <a class="clear-link" href="{{ route('password.request') }}">
+                            {{ __('Forgot Your Password?') }}
+                        </a>
+                    @endif
+                </form>
+            </div>
+
+            {{-- Register Form --}}
+            <div id="register-content" class="auth-modal-content">
+                <form method="POST" action="{{ route('register') }}">
+                    @csrf
+                    <div class="form-group">
+                        <label for="register-name">{{ __('Name') }}</label>
+                        <input id="register-name" type="text" name="name" required autocomplete="name">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-surname">{{ __('Surname') }}</label>
+                        <input id="register-surname" type="text" name="surname" required autocomplete="family-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">{{ __('Email Address') }}</label>
+                        <input id="register-email" type="email" name="email" required autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">{{ __('Password') }}</label>
+                        <input id="register-password" type="password" name="password" required autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="password-confirm">{{ __('Confirm Password') }}</label>
+                        <input id="password-confirm" type="password" name="password_confirmation" required autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="hero-btn" style="width: 100%;">{{ __('Register') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <footer class="footer-section">
       <div class="container footer-content">
@@ -83,6 +228,46 @@
       </div>
     </footer>
 
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalOverlay = document.getElementById('auth-modal-overlay');
+        const modal = document.getElementById('auth-modal');
+        const openButtons = document.querySelectorAll('.login-btn');
+        const closeButton = document.getElementById('auth-modal-close');
+
+        const loginTabBtn = document.getElementById('login-tab-btn');
+        const registerTabBtn = document.getElementById('register-tab-btn');
+        const loginContent = document.getElementById('login-content');
+        const registerContent = document.getElementById('register-content');
+
+        openButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                modalOverlay.style.display = 'flex';
+            });
+        });
+
+        const closeModal = () => {
+            modalOverlay.style.display = 'none';
+        };
+
+        closeButton.addEventListener('click', closeModal);
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                closeModal();
+            }
+        });
+
+        loginTabBtn.addEventListener('click', () => {
+            loginTabBtn.classList.add('active'); registerTabBtn.classList.remove('active');
+            loginContent.classList.add('active'); registerContent.classList.remove('active');
+        });
+        registerTabBtn.addEventListener('click', () => {
+            registerTabBtn.classList.add('active'); loginTabBtn.classList.remove('active');
+            registerContent.classList.add('active'); loginContent.classList.remove('active');
+        });
+    });
+    </script>
     @stack('scripts')
 </body>
 </html>

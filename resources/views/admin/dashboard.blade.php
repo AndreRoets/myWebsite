@@ -23,5 +23,6 @@
 <div class="dashboard-grid">
     <div class="card"><h3>Manage Properties</h3><p><a href="{{ route('admin.properties.list') }}">View all properties</a></p><p><a href="{{ route('admin.properties.create') }}">Create new property</a></p></div>
     <div class="card"><h3>Manage Agents</h3><p><a href="{{ route('admin.agents.index') }}">View all agents</a></p><p><a href="{{ route('admin.agents.create') }}">Create new agent</a></p></div>
+    <div class="card"><h3>Manage Users</h3><p><a href="{{ route('admin.users.index') }}">View all users</a></p></div>
 </div>
 @endsection

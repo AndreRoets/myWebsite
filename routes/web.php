@@ -1,9 +1,14 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\PropertyController;
 use App\Http\Controllers\AgentController;
 use App\Http\Controllers\Admin\AgentAdminController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Admin\UserAdminController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\PropertyAdminController;
 
 Route::get('/', fn() => view('home'))->name('home');
@@ -23,7 +28,7 @@ Route::get('/php-info', function () {
     phpinfo();
 })->name('php.info');
 
-Route::prefix('admin')->name('admin.')->group(function () {
+Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/', fn() => redirect()->route('admin.dashboard'));
     Route::get('/dashboard', fn() => view('admin.dashboard'))->name('dashboard');
 
@@ -34,8 +39,23 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('properties', PropertyAdminController::class)->except(['show']);
 
     Route::resource('agents', AgentAdminController::class)->except(['show']);
+
+    // User management routes
+    Route::resource('users', UserAdminController::class)->except(['show']);
 });
 
-Auth::routes();
+// Authentication Routes
+Route::middleware('guest')->group(function () {
+    Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [LoginController::class, 'login']);
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+    Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+    Route::post('register', [RegisterController::class, 'register']);
+});
+Route::post('logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
+
+// Authenticated user routes
+Route::middleware('auth')->group(function () {
+    Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+});
