@@ -23,6 +23,7 @@ class AgentController extends Controller
      */
     public function show(Agent $agent)
     {
+        $agent->load('properties');
         return view('agents.show', compact('agent'));
     }
 }
