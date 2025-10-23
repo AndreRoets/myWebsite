@@ -13,7 +13,7 @@ class Property extends Model
         'title','slug','reference','price','currency',
         'city','suburb','province','country',
         'bedrooms','bathrooms','garages','floor_size','erf_size',
-        'type','status','excerpt','description',
+        'type','status','excerpt','description','agent_id',
         'images','hero_image','lat','lng','is_featured','listed_at'
     ];
 
@@ -43,5 +43,13 @@ class Property extends Model
     public function routeKeyName(): string
     {
         return 'slug'; // enables implicit route model binding by slug
+    }
+
+    /**
+     * Get the agent that owns the property.
+     */
+    public function agent()
+    {
+        return $this->belongsTo(Agent::class);
     }
 }

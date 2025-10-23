@@ -32,23 +32,26 @@
                 @enderror
             </div>
 
+            <div class="form-group">
+                <label for="agent_id">Agent</label>
+                <select name="agent_id" id="agent_id" class="form-control @error('agent_id') is-invalid @enderror" required>
+                    <option value="">Select an Agent</option>
+                    @foreach($agents as $agent)
+                        <option value="{{ $agent->id }}" @selected(old('agent_id') == $agent->id)>
+                            {{ $agent->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('agent_id')
+                    <div class="error">{{ $message }}</div>
+                @enderror
+            </div>
+
             <div class="flex-grid">
                 <div class="form-group">
                     <label for="price">Price (ZAR)</label>
                     <input type="number" id="price" name="price" value="{{ old('price') }}" class="@error('price') is-invalid @enderror">
                     @error('price')
-                        <div class="error">{{ $message }}</div>
-                    @enderror
-                </div>
-                <div class="form-group">
-                    <label for="status">Status</label>
-                    <select id="status" name="status" class="@error('status') is-invalid @enderror">
-                        <option value="for_sale" @selected(old('status') == 'for_sale')>For Sale</option>
-                        <option value="for_rent" @selected(old('status') == 'for_rent')>For Rent</option>
-                        <option value="sold" @selected(old('status') == 'sold')>Sold</option>
-                        <option value="rented" @selected(old('status') == 'rented')>Rented</option>
-                    </select>
-                    @error('status')
                         <div class="error">{{ $message }}</div>
                     @enderror
                 </div>
@@ -108,7 +111,10 @@
                 </div>
                 <div class="form-group">
                     <label for="floor_size">Floor Size (m²)</label>
-                    <input type="number" id="floor_size" name="floor_size" value="{{ old('floor_size') }}">
+                    <input type="number" id="floor_size" name="floor_size" value="{{ old('floor_size') }}" class="@error('floor_size') is-invalid @enderror">
+                    @error('floor_size')
+                        <div class="error">{{ $message }}</div>
+                    @enderror
                 </div>
                 <div class="form-group">
                     <label for="erf_size">Erf Size (m²)</label>
@@ -137,7 +143,7 @@
 
             <div class="form-group">
                 <label for="hero">Hero Image (Main Picture)</label>
-                <input type="file" id="hero" name="hero" accept="image/webp,image/jpeg,image/png" class="@error('hero') is-invalid @enderror">
+                <input type="file" id="hero" name="hero_image" accept="image/webp,image/jpeg,image/png" class="@error('hero_image') is-invalid @enderror">
                 @error('hero')
                     <div class="error">{{ $message }}</div>
                 @enderror

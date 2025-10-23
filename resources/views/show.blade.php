@@ -5,6 +5,76 @@
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/property-show.css') }}">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Agent Card Styles for Public Property Show Page Sidebar */
+        .agent-sidebar-card {
+            background: var(--navy-900); /* Darker background for contrast */
+            border: 1px solid rgba(192, 168, 127, 0.35); /* Gold accent border */
+            padding: 1.5rem;
+            margin-top: 1.5rem; /* Space below sidebar header */
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .agent-sidebar-card .agent-image-wrapper {
+            width: 100px; /* Fixed size for agent image */
+            height: 100px;
+            border-radius: 50%; /* Circular image */
+            overflow: hidden;
+            margin-bottom: 1rem;
+            border: 2px solid var(--gold-500); /* Accent border */
+            flex-shrink: 0;
+        }
+        .agent-sidebar-card .agent-image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .agent-sidebar-card .agent-name {
+            font-family: "Playfair Display", serif;
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+            color: var(--text-100);
+        }
+        .agent-sidebar-card .agent-title {
+            font-size: 0.85rem;
+            color: var(--gold-500);
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            margin-bottom: 1rem;
+        }
+        .agent-sidebar-card .agent-contact-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            width: 100%;
+            margin-top: 1rem;
+        }
+        .agent-sidebar-card .agent-contact-links a {
+            display: block;
+            padding: 10px 15px;
+            border: 1px solid var(--gold-500);
+            color: var(--gold-500);
+            text-decoration: none;
+            transition: background-color 0.2s, color 0.2s;
+            font-weight: 600;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+        }
+        .agent-sidebar-card .agent-contact-links a:hover {
+            background-color: var(--gold-500);
+            color: var(--navy-900);
+        }
+        .agent-sidebar-card .agent-description {
+            font-size: 0.9rem;
+            color: var(--text-300);
+            margin-top: 1rem;
+            text-align: left;
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -87,9 +157,34 @@
                 <i data-lucide="home"></i>
             </div>
 
-            <button class="schedule-btn">
-                Schedule a Private Viewing
-            </button>
+            {{-- Agent Information Section --}}
+            @if($property->agent)
+                <div class="agent-sidebar-card">
+                    <div class="agent-image-wrapper">
+                        <img src="{{ $property->agent->image_url ?? asset('Image/agent-placeholder.webp') }}" alt="{{ $property->agent->name ?? 'Agent' }}">
+                    </div>
+                    <div class="agent-details">
+                        <h4 class="agent-name">{{ $property->agent->name }}</h4>
+                        <p class="agent-title">{{ $property->agent->title }}</p>
+                        <div class="agent-contact-links">
+                            <a href="mailto:{{ $property->agent->email }}">
+                                <i data-lucide="mail" style="width:18px; height:18px; vertical-align: middle; margin-right: 5px;"></i> Email {{ $property->agent->name }}
+                            </a>
+                            <a href="tel:{{ $property->agent->phone }}">
+                                <i data-lucide="phone" style="width:18px; height:18px; vertical-align: middle; margin-right: 5px;"></i> Call {{ $property->agent->name }}
+                            </a>
+                        </div>
+                        @if($property->agent->description)
+                            <p class="agent-description">{{ $property->agent->description }}</p>
+                        @endif
+                        <a href="{{ route('agents.show', $property->agent) }}" class="agent-contact-links" style="margin-top: 1.5rem;">
+                            <i data-lucide="user" style="width:18px; height:18px; vertical-align: middle; margin-right: 5px;"></i> View Agent Profile
+                        </a>
+                    </div>
+                </div>
+            @else
+                <button class="schedule-btn">Schedule a Private Viewing</button>
+            @endif
 
             <!-- Media Links -->
             <div class="media-links">

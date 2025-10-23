@@ -26,4 +26,12 @@ class Agent extends Model
     {
         return $this->image ? Storage::disk('public')->url($this->image) : null;
     }
+
+    /**
+     * Get the properties for the agent.
+     */
+    public function properties()
+    {
+        return $this->hasMany(Property::class);
+    }
 }

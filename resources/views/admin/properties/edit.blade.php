@@ -30,6 +30,21 @@
                 <input type="text" id="title" name="title" value="{{ old('title', $property->title) }}" required>
             </div>
 
+            <div class="form-group">
+                <label for="agent_id">Agent</label>
+                <select name="agent_id" id="agent_id" class="form-control @error('agent_id') is-invalid @enderror" required>
+                    <option value="">Select an Agent</option>
+                    @foreach($agents as $agent)
+                        <option value="{{ $agent->id }}" @selected(old('agent_id', $property->agent_id) == $agent->id)>
+                            {{ $agent->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('agent_id')
+                    <div class="error">{{ $message }}</div>
+                @enderror
+            </div>
+
             <div class="flex-grid">
                 <div class="form-group">
                     <label for="price">Price (ZAR)</label>
@@ -107,7 +122,7 @@
                         <img src="{{ asset('storage/' . $property->hero_image) }}" alt="Hero Image" style="max-width: 200px;">
                     </div>
                 @endif
-                <input type="file" id="hero" name="hero" accept="image/webp,image/jpeg,image/png">
+                <input type="file" id="hero_image" name="hero_image" accept="image/webp,image/jpeg,image/png">
             </div>
 
             <div class="form-group">

@@ -33,6 +33,9 @@ class PropertyController extends Controller
      */
     public function show(Property $property)
     {
+        // Eager load the agent relationship
+        $property->load('agent');
+
         // Find related properties (same type, different from the current one)
         $related = Property::where('type', $property->type)
             ->where('id', '!=', $property->id)

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Agent;
 use App\Models\Property;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -26,8 +27,10 @@ class PropertyAdminController extends Controller
      */
     public function create()
     {
+        $agents = Agent::orderBy('name')->get();
         return view('admin.properties.create', [
-            'property' => new Property()
+            'property' => new Property(), // Keep one instance and ensure it has a comma
+            'agents' => $agents,
         ]);
     }
 
@@ -37,6 +40,7 @@ class PropertyAdminController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'agent_id'    => 'required|exists:agents,id',
             'title'       => 'required|string|max:255',
             'description' => 'required|string',
             'price'       => 'required|numeric|min:0',
@@ -96,7 +100,8 @@ class PropertyAdminController extends Controller
      */
     public function edit(Property $property)
     {
-        return view('admin.properties.edit', compact('property'));
+        $agents = Agent::orderBy('name')->get();
+        return view('admin.properties.edit', compact('property', 'agents'));
     }
 
     /**
@@ -105,6 +110,7 @@ class PropertyAdminController extends Controller
     public function update(Request $request, Property $property)
     {
         $validated = $request->validate([
+            'agent_id'    => 'required|exists:agents,id',
             'title'       => 'required|string|max:255',
             'description' => 'required|string',
             'price'       => 'required|numeric|min:0',
