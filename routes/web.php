@@ -28,7 +28,7 @@ Route::get('/php-info', function () {
     phpinfo();
 })->name('php.info');
 
-Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/', fn() => redirect()->route('admin.dashboard'));
     Route::get('/dashboard', fn() => view('admin.dashboard'))->name('dashboard');
 

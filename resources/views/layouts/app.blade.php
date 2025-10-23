@@ -106,6 +106,9 @@
                             @guest
                                 <li><a href="#" class="login-btn" id="login-btn-hero">Login</a></li>
                             @else
+                                @if (Auth::user()->isAdmin())
+                                    <li><a href="{{ route('admin.dashboard') }}">Admin</a></li>
+                                @endif
                                 <li><a href="{{ route('profile.show') }}">Profile</a></li>
                             @endguest
                         </ul>
@@ -130,6 +133,9 @@
                         @guest
                             <li><a href="#" class="login-btn" id="login-btn-main">Login</a></li>
                         @else
+                            @if (Auth::user()->isAdmin())
+                                <li><a href="{{ route('admin.dashboard') }}">Admin</a></li>
+                            @endif
                             <li><a href="{{ route('profile.show') }}">Profile</a></li>
                         @endguest
                     </ul>
@@ -146,7 +152,9 @@
 
             <div class="auth-modal-tabs">
                 <button id="login-tab-btn" class="active">Login</button>
-                <button id="register-tab-btn">Register</button>
+                @if (Route::has('register'))
+                    <button id="register-tab-btn">Register</button>
+                @endif
             </div>
 
             {{-- Login Form --}}
@@ -172,35 +180,37 @@
                 </form>
             </div>
 
-            {{-- Register Form --}}
-            <div id="register-content" class="auth-modal-content">
-                <form method="POST" action="{{ route('register') }}">
-                    @csrf
-                    <div class="form-group">
-                        <label for="register-name">{{ __('Name') }}</label>
-                        <input id="register-name" type="text" name="name" required autocomplete="name">
-                    </div>
-                    <div class="form-group">
-                        <label for="register-surname">{{ __('Surname') }}</label>
-                        <input id="register-surname" type="text" name="surname" required autocomplete="family-name">
-                    </div>
-                    <div class="form-group">
-                        <label for="register-email">{{ __('Email Address') }}</label>
-                        <input id="register-email" type="email" name="email" required autocomplete="email">
-                    </div>
-                    <div class="form-group">
-                        <label for="register-password">{{ __('Password') }}</label>
-                        <input id="register-password" type="password" name="password" required autocomplete="new-password">
-                    </div>
-                    <div class="form-group">
-                        <label for="password-confirm">{{ __('Confirm Password') }}</label>
-                        <input id="password-confirm" type="password" name="password_confirmation" required autocomplete="new-password">
-                    </div>
-                    <div class="form-group">
-                        <button type="submit" class="hero-btn" style="width: 100%;">{{ __('Register') }}</button>
-                    </div>
-                </form>
-            </div>
+            @if (Route::has('register'))
+                {{-- Register Form --}}
+                <div id="register-content" class="auth-modal-content">
+                    <form method="POST" action="{{ route('register') }}">
+                        @csrf
+                        <div class="form-group">
+                            <label for="register-name">{{ __('Name') }}</label>
+                            <input id="register-name" type="text" name="name" required autocomplete="name">
+                        </div>
+                        <div class="form-group">
+                            <label for="register-surname">{{ __('Surname') }}</label>
+                            <input id="register-surname" type="text" name="surname" required autocomplete="family-name">
+                        </div>
+                        <div class="form-group">
+                            <label for="register-email">{{ __('Email Address') }}</label>
+                            <input id="register-email" type="email" name="email" required autocomplete="email">
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password">{{ __('Password') }}</label>
+                            <input id="register-password" type="password" name="password" required autocomplete="new-password">
+                        </div>
+                        <div class="form-group">
+                            <label for="password-confirm">{{ __('Confirm Password') }}</label>
+                            <input id="password-confirm" type="password" name="password_confirmation" required autocomplete="new-password">
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="hero-btn" style="width: 100%;">{{ __('Register') }}</button>
+                        </div>
+                    </form>
+                </div>
+            @endif
         </div>
     </div>
 
@@ -258,14 +268,16 @@
             }
         });
 
-        loginTabBtn.addEventListener('click', () => {
-            loginTabBtn.classList.add('active'); registerTabBtn.classList.remove('active');
-            loginContent.classList.add('active'); registerContent.classList.remove('active');
-        });
-        registerTabBtn.addEventListener('click', () => {
-            registerTabBtn.classList.add('active'); loginTabBtn.classList.remove('active');
-            registerContent.classList.add('active'); loginContent.classList.remove('active');
-        });
+        if (loginTabBtn && registerTabBtn) {
+            loginTabBtn.addEventListener('click', () => {
+                loginTabBtn.classList.add('active'); registerTabBtn.classList.remove('active');
+                loginContent.classList.add('active'); registerContent.classList.remove('active');
+            });
+            registerTabBtn.addEventListener('click', () => {
+                registerTabBtn.classList.add('active'); loginTabBtn.classList.remove('active');
+                registerContent.classList.add('active'); loginContent.classList.remove('active');
+            });
+        }
     });
     </script>
     @stack('scripts')
