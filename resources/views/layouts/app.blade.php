@@ -84,6 +84,21 @@
         .auth-modal form input {
             width: 100%;
             padding: 0.75rem;
+            background: #1f2937; /* dark slate */
+            border: 1px solid #4b5563; /* gray border */
+            border-radius: 4px;
+            color: #f9fafb; /* near white text */
+            font-family: "Montserrat", sans-serif;
+        }
+
+        .auth-modal form input:focus {
+            outline: 0;
+            border-color: var(--gold-500, #c0a87f);
+            box-shadow: 0 0 6px rgba(192,168,127,0.6);
+        }
+
+        .field-error {
+            color: #c0392b; font-size:0.8rem; margin-top:0.4rem;
         }
     </style>
     @stack('styles')
@@ -159,15 +174,31 @@
 
             {{-- Login Form --}}
             <div id="login-content" class="auth-modal-content active">
-                <form method="POST" action="{{ route('login') }}">
+                <form method="POST" action="{{ route('login') }}" id="login-form-modal">
                     @csrf
+
+                    {{-- Global login error (e.g. wrong email/password) --}}
+                    @if ($errors->has('email') && old('email') && !$errors->has('password'))
+                        <div class="auth-error-box" style="background:#4b1e1e; color:#f8d7da; border:1px solid #c0392b; padding:0.75rem; border-radius:4px; margin-bottom:1rem; font-size:0.9rem;">
+                            {{ $errors->first('email') }}
+                        </div>
+                    @endif
+
                     <div class="form-group">
                         <label for="login-email">{{ __('Email Address') }}</label>
-                        <input id="login-email" type="email" name="email" required autocomplete="email" autofocus>
+                        <input id="login-email" type="email" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
+                        @error('email')
+                            @if ($errors->first('email') !== trans('auth.failed'))
+                                <div class="field-error">{{ $message }}</div>
+                            @endif
+                        @enderror
                     </div>
                     <div class="form-group">
                         <label for="login-password">{{ __('Password') }}</label>
                         <input id="login-password" type="password" name="password" required autocomplete="current-password">
+                        @error('password')
+                            <div class="field-error">{{ $message }}</div>
+                        @enderror
                     </div>
                     <div class="form-group">
                         <button type="submit" class="hero-btn" style="width: 100%;">{{ __('Login') }}</button>
@@ -183,27 +214,42 @@
             @if (Route::has('register'))
                 {{-- Register Form --}}
                 <div id="register-content" class="auth-modal-content">
-                    <form method="POST" action="{{ route('register') }}">
+                    <form method="POST" action="{{ route('register') }}" id="register-form-modal">
                         @csrf
                         <div class="form-group">
                             <label for="register-name">{{ __('Name') }}</label>
-                            <input id="register-name" type="text" name="name" required autocomplete="name">
+                            <input id="register-name" type="text" name="name" value="{{ old('name') }}" required autocomplete="name">
+                            @error('name')
+                                <div class="field-error">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="form-group">
                             <label for="register-surname">{{ __('Surname') }}</label>
-                            <input id="register-surname" type="text" name="surname" required autocomplete="family-name">
+                            <input id="register-surname" type="text" name="surname" value="{{ old('surname') }}" required autocomplete="family-name">
+                             @error('surname')
+                                <div class="field-error">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="form-group">
                             <label for="register-email">{{ __('Email Address') }}</label>
-                            <input id="register-email" type="email" name="email" required autocomplete="email">
+                            <input id="register-email" type="email" name="email" value="{{ old('email') }}" required autocomplete="email">
+                            @error('email')
+                                <div class="field-error">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="form-group">
                             <label for="register-password">{{ __('Password') }}</label>
                             <input id="register-password" type="password" name="password" required autocomplete="new-password">
+                            @error('password')
+                                <div class="field-error">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="form-group">
                             <label for="password-confirm">{{ __('Confirm Password') }}</label>
                             <input id="password-confirm" type="password" name="password_confirmation" required autocomplete="new-password">
+                            @error('password_confirmation')
+                                <div class="field-error">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="form-group">
                             <button type="submit" class="hero-btn" style="width: 100%;">{{ __('Register') }}</button>
@@ -238,6 +284,18 @@
       </div>
     </footer>
 
+    {{-- Blade -> JS Bridge --}}
+    <script>
+        const HAS_LOGIN_ERRORS = @json(
+            ($errors->has('email') || $errors->has('password')) && old('email')
+        );
+
+        const HAS_REGISTER_ERRORS = @json(
+            $errors->has('name') || $errors->has('surname') || $errors->has('password_confirmation') ||
+            ($errors->has('email') && old('name')) // Email error on registration attempt
+        );
+    </script>
+
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         const modalOverlay = document.getElementById('auth-modal-overlay');
@@ -250,17 +308,43 @@
         const loginContent = document.getElementById('login-content');
         const registerContent = document.getElementById('register-content');
 
+        // --- Helper Functions ---
+        function openModal() {
+            modalOverlay.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modalOverlay.style.display = 'none';
+        }
+
+        function activateLoginTab() {
+            if (!loginTabBtn) return;
+            loginTabBtn.classList.add('active');
+            if (registerTabBtn) registerTabBtn.classList.remove('active');
+            if (loginContent) loginContent.classList.add('active');
+            if (registerContent) registerContent.classList.remove('active');
+        }
+
+        function activateRegisterTab() {
+            if (!registerTabBtn) return;
+            registerTabBtn.classList.add('active');
+            if (loginTabBtn) loginTabBtn.classList.remove('active');
+            if (registerContent) registerContent.classList.add('active');
+            if (loginContent) loginContent.classList.remove('active');
+        }
+
+        // --- Event Listeners ---
+
+        // Open modal from navbar click
         openButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
-                modalOverlay.style.display = 'flex';
+                openModal();
+                activateLoginTab(); // Default to login tab on manual open
             });
         });
 
-        const closeModal = () => {
-            modalOverlay.style.display = 'none';
-        };
-
+        // Close modal events
         closeButton.addEventListener('click', closeModal);
         modalOverlay.addEventListener('click', (e) => {
             if (e.target === modalOverlay) {
@@ -268,15 +352,19 @@
             }
         });
 
+        // Tab switching click handlers
         if (loginTabBtn && registerTabBtn) {
-            loginTabBtn.addEventListener('click', () => {
-                loginTabBtn.classList.add('active'); registerTabBtn.classList.remove('active');
-                loginContent.classList.add('active'); registerContent.classList.remove('active');
-            });
-            registerTabBtn.addEventListener('click', () => {
-                registerTabBtn.classList.add('active'); loginTabBtn.classList.remove('active');
-                registerContent.classList.add('active'); loginContent.classList.remove('active');
-            });
+            loginTabBtn.addEventListener('click', activateLoginTab);
+            registerTabBtn.addEventListener('click', activateRegisterTab);
+        }
+
+        // --- Auto-open modal if there were validation errors on page load ---
+        if (HAS_LOGIN_ERRORS) {
+            openModal();
+            activateLoginTab();
+        } else if (HAS_REGISTER_ERRORS) {
+            openModal();
+            activateRegisterTab();
         }
     });
     </script>

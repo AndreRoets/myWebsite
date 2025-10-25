@@ -76,6 +76,31 @@
   box-shadow: 0 18px 44px rgba(0,0,0,0.55);
 }
 
+.property-display-toggle {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+}
+
+.btn-toggle-display {
+    background-color: rgba(11, 18, 32, 0.7);
+    color: #ccc;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-toggle-display.toggled-on {
+    background-color: rgba(25, 135, 84, 0.7);
+    border-color: rgba(25, 135, 84, 1);
+    color: #fff;
+}
+
+
 .property-card .property-image-container {
   height: 240px;
   overflow: hidden;
@@ -163,6 +188,13 @@
 }
 .property-card-content .btn:active { transform: translateY(1px); }
 
+/* --- Disabled/Faded Styles --- */
+.disabled-link {
+    pointer-events: none;
+    cursor: not-allowed;
+    text-decoration: none;
+    color: #888;
+}
 /* --- Pagination --- */
 .pagination {
   margin-top: 40px;

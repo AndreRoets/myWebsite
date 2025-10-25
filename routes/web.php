@@ -21,6 +21,10 @@ Route::prefix('properties')->group(function () {
     Route::get('/{property:slug}', [PropertyController::class, 'show'])->name('properties.show');
 });
 
+Route::post('/properties/{property}/toggle-display', [PropertyController::class, 'toggleDisplay'])
+    ->middleware(['auth', 'admin'])
+    ->name('properties.toggleDisplay');
+
 Route::get('/contact', fn() => view('contact'))->name('contact');
  
 // Temporary debug route to check php.ini settings

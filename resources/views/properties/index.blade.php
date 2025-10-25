@@ -10,6 +10,12 @@
 <div class="container properties-page">
   <h1 class="page-title">Our Curated Collection</h1>
 
+  @if (session('status'))
+      <div class="alert alert-success" style="background-color: #d4edda; color: #155724; padding: .75rem 1.25rem; margin-bottom: 1rem; border: 1px solid #c3e6cb; border-radius: .25rem;">
+          {{ session('status') }}
+      </div>
+  @endif
+
   {{-- Filter Section --}}
   <form method="GET" class="filters" action="{{ route('properties.index') }}">
     <select name="type" aria-label="Property Type">
@@ -42,34 +48,26 @@
   <div class="properties-grid">
     @forelse($properties as $p)
       <a href="{{ route('properties.show', $p) }}" class="property-card">
-        {{-- Image --}}
         <div class="property-image"
-             style="background-image:url('{{ $p->hero_image ? asset('storage/'.$p->hero_image) : asset('Image/category1.webp') }}')">
+            style="background-image:url('{{ $p->hero_image ? asset('storage/'.$p->hero_image) : asset('Image/category1.webp') }}')">
         </div>
-
-        {{-- Content --}}
         <div class="property-card-content">
           <h3>{{ $p->title ?? 'Untitled Property' }}</h3>
-
           @if(!is_null($p->price))
-            <p class="price">R {{ number_format($p->price, 0, ',', ' ') }}</p>
+              <p class="price">R {{ number_format($p->price, 0, ',', ' ') }}</p>
           @endif
-
           <p>
             <strong>Beds:</strong> {{ $p->bedrooms ?? '—' }}
             &nbsp;•&nbsp;
             <strong>Baths:</strong> {{ $p->bathrooms ?? '—' }}
           </p>
-
           @if(!empty($p->floor_size))
-            <p><strong>Size:</strong> {{ $p->floor_size }} m²</p>
+              <p><strong>Size:</strong> {{ $p->floor_size }} m²</p>
           @endif
-
           <p>
             <strong>Location:</strong>
             {{ trim(($p->suburb ?? '').($p->suburb && $p->city ? ', ' : '').($p->city ?? '—')) }}
           </p>
-
           <span class="btn">View Details</span>
         </div>
       </a>

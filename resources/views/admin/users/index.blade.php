@@ -30,6 +30,7 @@
                         <tr>
                             <th>Name</th>
                             <th>Email</th>
+                            <th>Status</th>
                             <th>Joined</th>
                             <th>Actions</th>
                         </tr>
@@ -37,8 +38,15 @@
                     <tbody>
                         @foreach($users as $user)
                             <tr>
-                                <td>{{ $user->name }}</td>
+                                <td>
+                                    {{ $user->name }}
+                                    @if($user->is_admin) <span class="badge" style="background-color: var(--gold-500); color: var(--navy-900);">Admin</span> @endif
+                                </td>
                                 <td>{{ $user->email }}</td>
+                                <td>
+                                    @if($user->is_approved) <span class="badge" style="background-color: var(--green-500);">Approved</span>
+                                    @else <span class="badge" style="background-color: var(--red-500);">Not Approved</span> @endif
+                                </td>
                                 <td>{{ $user->created_at->format('M d, Y') }}</td>
                                 <td class="actions">
                                     <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-primary">Edit</a>
