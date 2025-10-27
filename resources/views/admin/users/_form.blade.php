@@ -33,8 +33,7 @@
 
         <div class="form-group">
             <div class="form-check">
-                <input type="hidden" name="is_admin" value="0">
-                <input type="checkbox" id="is_admin" name="is_admin" value="1" @checked(old('is_admin', $user->is_admin ?? false) == 1)>
+                <input type="checkbox" id="is_admin" name="is_admin" value="1" @checked(old('is_admin', $user->is_admin ?? false))>
                 <label for="is_admin">Make this user an Administrator</label>
             </div>
             @error('is_admin') <div class="error-message">{{ $message }}</div> @enderror
@@ -42,8 +41,7 @@
 
         <div class="form-group">
             <div class="form-check">
-                <input type="hidden" name="is_approved" value="0">
-                <input type="checkbox" id="is_approved" name="is_approved" value="1" @checked(old('is_approved', $user->is_approved ?? false) == 1)>
+                <input type="checkbox" id="is_approved" name="is_approved" value="1" @checked(old('is_approved', $user->is_approved ?? false))>
                 <label for="is_approved">Approve this user</label>
             </div>
             @error('is_approved') <div class="error-message">{{ $message }}</div> @enderror

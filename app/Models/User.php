@@ -21,6 +21,7 @@ class User extends Authenticatable
         'email',
         'password',
         'is_admin',
+        'is_approved',
     ];
 
     /**
@@ -44,6 +45,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
+            'is_approved' => 'boolean',
         ];
     }
 
@@ -55,5 +57,15 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->is_admin;
+    }
+
+    /**
+     * Check if the user is approved.
+     *
+     * @return bool
+     */
+    public function isApproved(): bool
+    {
+        return $this->is_approved;
     }
 }

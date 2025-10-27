@@ -13,13 +13,14 @@ class Property extends Model
         'title','slug','reference','price','currency',
         'city','suburb','province','country',
         'bedrooms','bathrooms','garages','floor_size','erf_size',
-        'type','status','excerpt','description','agent_id',
-        'images','hero_image','lat','lng','is_featured','listed_at'
+        'type','status','excerpt','description','agent_id','is_visible',
+        'images','hero_image','lat','lng','is_featured','listed_at',
     ];
 
     protected $casts = [
         'images' => 'array',
         'is_featured' => 'boolean',
+        'is_visible' => 'boolean',
         'listed_at' => 'datetime',
     ];
 
@@ -40,7 +41,7 @@ class Property extends Model
         return ucfirst(str_replace('_', ' ', $this->type));
     }
 
-    public function routeKeyName(): string
+    public function getRouteKeyName(): string
     {
         return 'slug'; // enables implicit route model binding by slug
     }

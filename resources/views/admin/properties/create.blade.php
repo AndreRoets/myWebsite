@@ -157,6 +157,8 @@
                 @enderror
             </div>
             
+            @include('admin.properties._form-visibility')
+
             <button type="submit">Create Property</button>
         </form>
 @endsection

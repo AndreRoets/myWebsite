@@ -47,30 +47,59 @@
   {{-- Property Cards --}}
   <div class="properties-grid">
     @forelse($properties as $p)
-      <a href="{{ route('properties.show', $p) }}" class="property-card">
+      @php
+        // A property is restricted for the current user if it's not visible AND
+        // (the user is a guest OR the user is not approved).
+        $isRestrictedForUser = !$p->is_visible && (!auth()->check() || !auth()->user()->isApproved());
+      @endphp
+
+      @if(!$isRestrictedForUser)
+        <a href="{{ route('properties.show', $p) }}" class="property-card-link">
+      @endif
+      <div class="property-card @if($isRestrictedForUser) is-restricted @endif" style="position: relative;">
         <div class="property-image"
-            style="background-image:url('{{ $p->hero_image ? asset('storage/'.$p->hero_image) : asset('Image/category1.webp') }}')">
+             style="background-image:url('{{ $p->hero_image ? asset('storage/'.$p->hero_image) : asset('Image/category1.webp') }}');
+                    {{ $isRestrictedForUser ? 'filter: blur(12px); transform: scale(1.1);' : '' }}">
+          @if($isRestrictedForUser)
+            <div class="restricted-badge" style="position: absolute; top: 1rem; left: 1rem; background: var(--gold-500, #c0a87f); color: var(--navy-900, #111827); padding: 0.25rem 0.75rem; border-radius: 4px; font-weight: bold; font-size: 0.8rem;">
+              Exclusive
+            </div>
+          @endif
         </div>
         <div class="property-card-content">
           <h3>{{ $p->title ?? 'Untitled Property' }}</h3>
+
           @if(!is_null($p->price))
               <p class="price">R {{ number_format($p->price, 0, ',', ' ') }}</p>
           @endif
+
           <p>
             <strong>Beds:</strong> {{ $p->bedrooms ?? '—' }}
             &nbsp;•&nbsp;
             <strong>Baths:</strong> {{ $p->bathrooms ?? '—' }}
           </p>
-          @if(!empty($p->floor_size))
-              <p><strong>Size:</strong> {{ $p->floor_size }} m²</p>
-          @endif
+
           <p>
             <strong>Location:</strong>
             {{ trim(($p->suburb ?? '').($p->suburb && $p->city ? ', ' : '').($p->city ?? '—')) }}
           </p>
-          <span class="btn">View Details</span>
+
+          @if($isRestrictedForUser)
+            <div class="restricted-cta" style="margin-top: 1rem; text-align: center;">
+              <span class="btn" style="background-color: #6c757d; cursor: not-allowed;">Details Restricted</span>
+              <p style="font-size: 0.8rem; margin-top: 0.5rem; color: #ccc;">Login as an approved user to view.</p>
+            </div>
+          @else
+            @if(!empty($p->floor_size))
+                <p><strong>Size:</strong> {{ $p->floor_size }} m²</p>
+            @endif
+            <span class="btn">View Details</span>
+          @endif
         </div>
-      </a>
+      </div>
+      @if(!$isRestrictedForUser)
+        </a>
+      @endif
     @empty
       <p>No properties found matching your filters.</p>
     @endforelse

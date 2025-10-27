@@ -137,6 +137,8 @@
                 <input type="file" id="images" name="images[]" multiple accept="image/webp,image/jpeg,image/png">
             </div>
 
+            @include('admin.properties._form-visibility')
+
             <button type="submit">Update Property</button>
         </form>
 @endsection
