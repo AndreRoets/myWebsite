@@ -12,15 +12,17 @@ class Property extends Model
     protected $fillable = [
         'title','slug','reference','price','currency',
         'city','suburb','province','country',
-        'bedrooms','bathrooms','garages','floor_size','erf_size',
-        'type','status','excerpt','description','agent_id','is_visible',
-        'images','hero_image','lat','lng','is_featured','listed_at',
+        'bedrooms', 'bathrooms', 'garages', 'floor_size', 'erf_size',
+        'type', 'status', 'excerpt', 'description', 'agent_id',
+        'is_visible', 'is_exclusive', // Add is_exclusive here
+        'images', 'hero_image', 'lat', 'lng', 'is_featured', 'listed_at',
     ];
 
     protected $casts = [
         'images' => 'array',
         'is_featured' => 'boolean',
         'is_visible' => 'boolean',
+        'is_exclusive' => 'boolean', // And cast it to boolean
         'listed_at' => 'datetime',
     ];
 

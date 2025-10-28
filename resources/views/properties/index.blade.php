@@ -48,20 +48,23 @@
   <div class="properties-grid">
     @forelse($properties as $p)
       @php
-        // A property is restricted for the current user if it's not visible AND
-        // (the user is a guest OR the user is not approved).
-        $isRestrictedForUser = !$p->is_visible && (!auth()->check() || !auth()->user()->isApproved());
+        // A property is visually restricted if:
+        // 1. It's not visible AND the user is a guest or not approved.
+        // 2. It's exclusive AND the user is a guest.
+        $isVisuallyRestricted = (!$p->is_visible && (!auth()->check() || !auth()->user()->isApproved()))
+                                || ($p->is_exclusive && !auth()->check());
+        $isClickable = !$isVisuallyRestricted;
       @endphp
 
-      @if(!$isRestrictedForUser)
+      @if($isClickable)
         <a href="{{ route('properties.show', $p) }}" class="property-card-link">
       @endif
-      <div class="property-card @if($isRestrictedForUser) is-restricted @endif" style="position: relative;">
+      <div class="property-card @if($isVisuallyRestricted) is-restricted @endif" style="position: relative;">
         <div class="property-image"
              style="background-image:url('{{ $p->hero_image ? asset('storage/'.$p->hero_image) : asset('Image/category1.webp') }}');
-                    {{ $isRestrictedForUser ? 'filter: blur(12px); transform: scale(1.1);' : '' }}">
-          @if($isRestrictedForUser)
-            <div class="restricted-badge" style="position: absolute; top: 1rem; left: 1rem; background: var(--gold-500, #c0a87f); color: var(--navy-900, #111827); padding: 0.25rem 0.75rem; border-radius: 4px; font-weight: bold; font-size: 0.8rem;">
+                    {{ $isVisuallyRestricted ? 'filter: blur(12px); transform: scale(1.1);' : '' }}">
+          @if($p->is_exclusive && auth()->check())
+            <div class="restricted-badge" style="position: absolute; top: 1rem; left: 1rem; background: var(--gold-accent, #c0a87f); color: var(--dark-blue, #161a29); padding: 0.25rem 0.75rem; border-radius: 4px; font-weight: bold; font-size: 0.8rem; z-index: 1;">
               Exclusive
             </div>
           @endif
@@ -84,10 +87,14 @@
             {{ trim(($p->suburb ?? '').($p->suburb && $p->city ? ', ' : '').($p->city ?? '—')) }}
           </p>
 
-          @if($isRestrictedForUser)
+          @if($isVisuallyRestricted)
             <div class="restricted-cta" style="margin-top: 1rem; text-align: center;">
               <span class="btn" style="background-color: #6c757d; cursor: not-allowed;">Details Restricted</span>
-              <p style="font-size: 0.8rem; margin-top: 0.5rem; color: #ccc;">Login as an approved user to view.</p>
+              @if($p->is_exclusive && !auth()->check())
+                <p style="font-size: 0.8rem; margin-top: 0.5rem; color: #ccc;">Register or login to view.</p>
+              @else
+                <p style="font-size: 0.8rem; margin-top: 0.5rem; color: #ccc;">Login as an approved user to view.</p>
+              @endif
             </div>
           @else
             @if(!empty($p->floor_size))
@@ -97,7 +104,7 @@
           @endif
         </div>
       </div>
-      @if(!$isRestrictedForUser)
+      @if($isClickable)
         </a>
       @endif
     @empty

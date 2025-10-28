@@ -59,6 +59,7 @@ class PropertyAdminController extends Controller
             'images'      => 'nullable|array|max:500', // Set a max number of files
             'images.*'    => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
             'is_visible'  => 'required|boolean',
+            'is_exclusive' => 'required|boolean',
         ]);
 
         // Slug
@@ -67,8 +68,9 @@ class PropertyAdminController extends Controller
         // Remove temp file inputs from mass assignment
         unset($validated['hero_image'], $validated['hero'], $validated['images']);
 
-        // Handle checkbox for is_visible
+        // Handle checkboxes explicitly
         $validated['is_visible'] = $request->boolean('is_visible');
+        $validated['is_exclusive'] = $request->boolean('is_exclusive');
 
         // Create first to get ID
         $property = Property::create($validated);
@@ -132,6 +134,7 @@ class PropertyAdminController extends Controller
             'images'      => 'nullable|array|max:500', // Set a max number of files
             'images.*'    => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
             'is_visible'  => 'required|boolean',
+            'is_exclusive' => 'required|boolean',
         ]);
 
         // Slug
@@ -150,9 +153,9 @@ class PropertyAdminController extends Controller
         // Remove temp gallery input before update()
         unset($validated['images']);
 
-        // Handle checkbox for is_visible
+        // Handle checkboxes explicitly
         $validated['is_visible'] = $request->boolean('is_visible');
-
+        $validated['is_exclusive'] = $request->boolean('is_exclusive');
         $property->update($validated);
 
         // Append new gallery images
