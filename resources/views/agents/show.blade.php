@@ -101,20 +101,82 @@
         </div>
     </div>
 
-    <h2 class="page-header__title" style="text-align: left; margin-bottom: 2rem;">Properties Listed by {{ $agent->name }}</h2>
+    <div class="agent-properties-section">
+        <h2 class="agent-properties-heading">Properties Listed by {{ $agent->name }}</h2>
 
-    <div class="properties-grid">
-        @forelse($agent->properties as $property)
-            <a href="{{ route('properties.show', $property) }}" class="property-card">
-                <img src="{{ $property->hero_image ? asset('storage/' . $property->hero_image) : asset('images/property-placeholder.jpg') }}" alt="{{ $property->title }}">
-                <div class="property-card-content">
-                    <h3 class="property-card-title">{{ $property->title }}</h3>
-                    <p class="property-card-price">{{ $property->display_price }}</p>
+        <div class="agent-properties-grid">
+            @forelse($agent->properties as $property)
+            @php
+                // A property is visually restricted if:
+                // 1. It's not visible AND the user is a guest or not approved.
+                // 2. It's exclusive AND the user is a guest.
+                $isVisuallyRestricted = (!$property->is_visible && (!auth()->check() || !auth()->user()->isApproved()))
+                                        || ($property->is_exclusive && !auth()->check());
+                $isClickable = !$isVisuallyRestricted;
+            @endphp
+
+            @if($isClickable)
+                <a class="property-card-link" href="{{ route('properties.show', $property) }}">
+            @else
+                <div class="property-card-link"> {{-- Non-clickable wrapper to maintain layout --}}
+            @endif
+
+                <article class="property-card @if($isVisuallyRestricted) is-restricted @endif">
+                    <div class="property-image-container">
+                        <div class="property-image" style="background-image: url('{{ $property->hero_image ? asset('storage/' . $property->hero_image) : asset('images/property-placeholder.jpg') }}'); {{ $isVisuallyRestricted ? 'filter: blur(8px);' : '' }}">
+                            {{-- Status badge --}}
+                            @if($property->status)
+                                <span class="property-status-badge">{{ $property->status }}</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="property-card-content">
+                        <h3>{{ $property->title }}</h3>
+
+                        <p>{{ $property->address ?? $property->location ?? 'Address not available' }}</p>
+
+                        <p>
+                            {{ $property->bedrooms ?? '—' }} Bed ·
+                            {{ $property->bathrooms ?? '—' }} Bath ·
+                            {{ $property->garages ?? '—' }} Garage
+                        </p>
+
+                        <p class="price">{{ $property->display_price }}</p>
+
+                        @if($isVisuallyRestricted)
+                            <div class="restricted-cta" style="margin-top: 16px;">
+                                @php
+                                    $needsApproval = !$property->is_visible && (!auth()->check() || !auth()->user()->isApproved());
+                                    $needsLogin = $property->is_exclusive && !auth()->check();
+                                @endphp
+
+                                @if ($needsApproval && $needsLogin)
+                                    <span class="btn" style="background-color: #4a5568; border-color: #4a5568; color: #a0aec0; cursor: not-allowed;">Login as an approved user to view.</span>
+                                @elseif ($needsApproval)
+                                    <span class="btn" style="background-color: #4a5568; border-color: #4a5568; color: #a0aec0; cursor: not-allowed;">Only approved users can view this property.</span>
+                                @elseif ($needsLogin)
+                                    <span class="btn" style="background-color: #4a5568; border-color: #4a5568; color: #a0aec0; cursor: not-allowed;">Login to view this property.</span>
+                                @else
+                                    {{-- Fallback, though should not be reached if $isVisuallyRestricted is true --}}
+                                    <span class="btn" style="background-color: #4a5568; border-color: #4a5568; color: #a0aec0; cursor: not-allowed;">Details Restricted</span>
+                                @endif
+                            </div>
+                        @else
+                            <span class="btn">View Details</span>
+                        @endif
+                    </div>
+                </article>
+
+            @if($isClickable)
+                </a>
+            @else
                 </div>
-            </a>
+            @endif
         @empty
-            <p>This agent currently has no properties listed.</p>
+            <p style="color: var(--text-300);">This agent currently has no properties listed that are visible to you.</p>
         @endforelse
+        </div>
     </div>
 </div>
 @endsection

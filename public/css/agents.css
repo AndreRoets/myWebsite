@@ -140,3 +140,185 @@ body.agents-page {
 .agent-card__contact a:hover {
     color: var(--gold-500);
 }
+
+/* ===============================
+   Agent Page → Property Listings
+   Reuse Properties Page Card Style
+   =============================== */
+
+.agent-properties-section {
+    margin-top: 48px;
+}
+
+.agent-properties-heading {
+    font-family: "Playfair Display", serif;
+    font-weight: 600;
+    font-size: clamp(20px, 2vw, 28px);
+    color: var(--text-100);
+    text-align: left;
+    margin: 0 0 24px 0;
+    border-left: 3px solid var(--gold-500);
+    padding-left: 12px;
+    letter-spacing: .02em;
+}
+
+/* Grid for this agent's properties */
+.agent-properties-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 32px;
+    justify-items: center;
+}
+
+/* Link wrapper so the whole card is clickable */
+.property-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    width: 100%;
+    max-width: 380px;
+}
+
+/* Card shell (identical to properties page) */
+.property-card {
+    width: 100%;
+    max-width: 100%;
+    background-color: var(--navy-800);
+    border: 1.5px solid rgba(212, 184, 124, 0.65);
+    border-radius: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    color: var(--text-100);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.45);
+    transition: transform .25s ease,
+                box-shadow .25s ease,
+                border-color .25s ease;
+    position: relative;
+}
+
+.property-card:not(.is-restricted):hover {
+    transform: translateY(-8px);
+    border-color: var(--gold-500);
+    box-shadow: 0 18px 44px rgba(0,0,0,0.55);
+}
+
+/* image wrapper with angled bottom */
+.property-image-container {
+    height: 240px;
+    overflow: hidden;
+    clip-path: polygon(0 0, 100% 0, 100% 88%, 0% 100%);
+    position: relative;
+    background: var(--navy-900);
+}
+
+.property-image {
+    height: 240px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    clip-path: polygon(0 0, 100% 0, 100% 88%, 0% 100%);
+    transition: transform .45s ease, filter .3s ease;
+    position: relative;
+}
+
+.property-card:not(.is-restricted):hover .property-image {
+    transform: scale(1.08);
+}
+
+/* thin gold strip along the angle */
+.property-image::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--gold-500);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+}
+
+/* optional badge like "For Sale" */
+.property-status-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid var(--gold-500);
+    color: var(--gold-500);
+    font-size: 0.7rem;
+    font-family: 'Montserrat', sans-serif;
+    padding: 4px 8px;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    z-index: 2;
+}
+
+/* text/content area */
+.property-card-content {
+    padding: 22px 24px 28px;
+    text-align: left;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.property-card-content h3 {
+    font-family: "Playfair Display", serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 10px 0;
+}
+
+.property-card-content p {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.92rem;
+    color: rgba(255,255,255,0.78);
+    margin: 4px 0;
+}
+
+.property-card-content .price {
+    color: var(--gold-500);
+    font-weight: 600;
+    margin-top: 8px;
+    font-size: 1.1rem;
+}
+
+/* CTA button */
+.property-card-content .btn {
+    display: inline-block;
+    margin-top: auto; /* Pushes button to the bottom */
+    padding: 8px 20px;
+    border: 1px solid var(--gold-500);
+    color: var(--gold-500);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    text-decoration: none;
+    text-align: center;
+    transition: background-color .25s ease,
+                color .25s ease,
+                transform .15s ease;
+}
+
+.property-card-content .btn:hover {
+    background-color: var(--gold-500);
+    color: var(--navy-900);
+}
+
+.property-card-content .btn:active {
+    transform: translateY(1px);
+}
+
+/* responsive tweaks same as properties page */
+@media (max-width: 992px) {
+    .agent-properties-grid {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    }
+}
+@media (max-width: 768px) {
+    .agent-properties-grid {
+        justify-items: center;
+        grid-template-columns: 1fr;
+    }
+}

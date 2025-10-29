@@ -7,8 +7,8 @@
     <section class="hero">
         <div class="hero-content">
             <h1>Discover the Exceptional</h1>
-            <p>Than odeieur so variations tree free wood ass inc com discprenad. fou edersunt.</p>
-            <a href="{{ route('properties.index') }}" class="hero-btn">VIEW PORTFOLIO</a>
+            <p>Exceptional homes. Extraordinary views. Exclusive living</p>
+            <a href="{{ route('properties.index') }}" class="hero-btn">View Properties</a>
         </div>
     </section>
 

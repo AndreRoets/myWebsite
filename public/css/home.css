@@ -406,6 +406,37 @@ footer {
 
 .social-icons a:hover { color: var(--gold-accent); }
 
+/* New Footer Styles for Centering */
+.footer-section {
+    text-align: center;
+}
+
+.footer-content {
+    justify-content: center; /* Center flex items */
+    gap: 4rem; /* Add space between logo and links */
+}
+
+.footer-column {
+    text-align: center;
+}
+
+.footer-logo-column .footer-logo {
+    justify-content: center; /* Center the logo image */
+    margin-bottom: 0.5rem;
+}
+
+.footer-logo-column .footer-text {
+    color: var(--text-muted);
+}
+
+.footer-links-column .footer-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    color: var(--text-light);
+    margin-bottom: 1rem;
+}
+
+
 /* ===============================
    RESPONSIVE
 ================================= */
@@ -425,10 +456,12 @@ footer {
     .category-item { height: 300px; transform: none; }
     .testimonial blockquote { font-size: 2.2em; max-width: 600px; }
     .footer-content { flex-direction: column; text-align: center; }
-    .footer-logo { margin-bottom: 25px; }
+    .footer-logo-column { margin-bottom: 25px; }
     .footer-nav { margin-top: 20px; justify-content: center; }
     .footer-nav li { margin: 0 15px 10px; }
     .social-icons { margin-top: 25px; margin-left: 0; }
+    .footer-logo { justify-content: center; }
+
 }
 @media (max-width: 768px) {
     .logo { font-size: 20px; }
@@ -461,4 +494,155 @@ footer {
 @keyframes phase {
     0%   { --phase: -200%; }
     100% { --phase: 200%;  }
+}
+/* =================================
+   Site Footer - Redesigned
+=================================== */
+.site-footer {
+    background-color: var(--navy-blue);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 3rem 1.5rem 1.5rem; /* Reduced top and bottom padding */
+    position: relative;
+    overflow: hidden;
+    border-top: 1px solid rgba(192, 168, 127, 0.2);
+}
+
+/* Spotlight animation on load */
+.site-footer::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    left: -50%;
+    width: 200%;
+    height: 150%;
+    background: radial-gradient(circle at center, rgba(192, 168, 127, 0.25) 0%, transparent 30%);
+    animation: footerSpotlight 2s ease-out forwards;
+    pointer-events: none;
+    opacity: 0; /* Start with opacity 0 for the animation */
+}
+
+@keyframes footerSpotlight {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.site-footer__container {
+    max-width: 1100px;
+    margin: 0 auto;
+    position: relative; /* Ensure content is above the pseudo-element */
+}
+
+.site-footer__main {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem; /* Reduced gap */
+    margin-bottom: 2.5rem; /* Reduced margin */
+    padding-bottom: 2.5rem; /* Reduced padding */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.site-footer__branding {
+    flex: 1;
+    max-width: 320px;
+}
+
+.site-footer__logo img {
+    max-width: 200px; /* Reduced logo size */
+    height: auto;
+    transition: opacity 0.3s ease;
+}
+
+.site-footer__logo:hover img {
+    opacity: 0.9;
+}
+
+.site-footer__tagline {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 1rem; /* Reduced margin */
+}
+
+.site-footer__navigation {
+    display: flex;
+    flex: 2;
+    justify-content: flex-end;
+    gap: 5rem;
+}
+
+.site-footer__heading {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem; /* Slightly smaller heading */
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0 0 1rem; /* Reduced margin */
+    letter-spacing: 0.03em;
+}
+
+.site-footer__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem; /* Tighter link spacing */
+}
+
+.site-footer__nav a {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    position: relative;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.site-footer__nav a:hover {
+    color: var(--gold-accent);
+    transform: translateX(5px);
+}
+
+.site-footer__bottom {
+    text-align: center;
+}
+
+.site-footer__copyright {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0;
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+    .site-footer__main {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .site-footer__branding {
+        max-width: 100%;
+        margin-bottom: 3rem;
+    }
+
+    .site-footer__logo img {
+        margin: 0 auto;
+    }
+
+    .site-footer__navigation {
+        justify-content: center;
+        text-align: center;
+        gap: 3rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .site-footer__navigation {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .site-footer__nav-group {
+        width: 100%;
+    }
 }

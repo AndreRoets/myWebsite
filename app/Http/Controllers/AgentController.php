@@ -23,7 +23,13 @@ class AgentController extends Controller
      */
     public function show(Agent $agent)
     {
-        $agent->load('properties');
+        // Load all active properties for the agent.
+        // The view will handle the visibility logic (blurring, etc.).
+        $agent->load(['properties' => function ($query) {
+            $query->whereIn('status', ['for_sale', 'for_rent'])
+                  ->latest();
+        }]);
+
         return view('agents.show', compact('agent'));
     }
 }

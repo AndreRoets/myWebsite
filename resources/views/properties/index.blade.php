@@ -63,11 +63,6 @@
         <div class="property-image"
              style="background-image:url('{{ $p->hero_image ? asset('storage/'.$p->hero_image) : asset('Image/category1.webp') }}');
                     {{ $isVisuallyRestricted ? 'filter: blur(12px); transform: scale(1.1);' : '' }}">
-          @if($p->is_exclusive && auth()->check())
-            <div class="restricted-badge" style="position: absolute; top: 1rem; left: 1rem; background: var(--gold-accent, #c0a87f); color: var(--dark-blue, #161a29); padding: 0.25rem 0.75rem; border-radius: 4px; font-weight: bold; font-size: 0.8rem; z-index: 1;">
-              Exclusive
-            </div>
-          @endif
         </div>
         <div class="property-card-content">
           <h3>{{ $p->title ?? 'Untitled Property' }}</h3>
@@ -89,12 +84,20 @@
 
           @if($isVisuallyRestricted)
             <div class="restricted-cta" style="margin-top: 1rem; text-align: center;">
-              <span class="btn" style="background-color: #6c757d; cursor: not-allowed;">Details Restricted</span>
-              @if($p->is_exclusive && !auth()->check())
-                <p style="font-size: 0.8rem; margin-top: 0.5rem; color: #ccc;">Register or login to view.</p>
-              @else
-                <p style="font-size: 0.8rem; margin-top: 0.5rem; color: #ccc;">Login as an approved user to view.</p>
-              @endif
+                @php
+                    $needsApproval = !$p->is_visible && (!auth()->check() || !auth()->user()->isApproved());
+                    $needsLogin = $p->is_exclusive && !auth()->check();
+                @endphp
+
+                @if ($needsApproval && $needsLogin)
+                    <span class="btn" style="background-color: #6c757d; cursor: not-allowed;">Login as an approved user to view.</span>
+                @elseif ($needsApproval)
+                    <span class="btn" style="background-color: #6c757d; cursor: not-allowed;">Only approved users can view this property.</span>
+                @elseif ($needsLogin)
+                    <span class="btn" style="background-color: #6c757d; cursor: not-allowed;">Login to view this property.</span>
+                @else
+                    <span class="btn" style="background-color: #6c757d; cursor: not-allowed;">Details Restricted</span>
+                @endif
             </div>
           @else
             @if(!empty($p->floor_size))

@@ -100,6 +100,11 @@
         .field-error {
             color: #c0392b; font-size:0.8rem; margin-top:0.4rem;
         }
+
+        /* Active navigation link style */
+        .nav-links a.active {
+            color: var(--gold-500, #c0a87f);
+        }
     </style>
     @stack('styles')
 </head>
@@ -114,10 +119,10 @@
                     </a>
                     <nav>
                         <ul class="nav-links">
-                            <li><a href="{{ route('properties.index') }}">Properties</a></li>
+                            <li><a href="{{ route('properties.index') }}" class="{{ request()->routeIs('properties.*') ? 'active' : '' }}">Properties</a></li>
                             <li><a href="#">Services</a></li>
-                            <li><a href="{{ route('agents.index') }}">Agents</a></li>
-                            <li><a href="{{ route('contact') }}">Contact</a></li>
+                            <li><a href="{{ route('agents.index') }}" class="{{ request()->routeIs('agents.*') ? 'active' : '' }}">Agents</a></li>
+                            <li><a href="{{ route('contact') }}" class="{{ request()->routeIs('contact') ? 'active' : '' }}">Contact</a></li>
                             @guest
                                 <li><a href="#" class="login-btn" id="login-btn-hero">Login</a></li>
                             @else
@@ -141,10 +146,10 @@
                 </a>
                 <nav>
                     <ul class="nav-links">
-                        <li><a href="{{ route('properties.index') }}">Properties</a></li>
+                        <li><a href="{{ route('properties.index') }}" class="{{ request()->routeIs('properties.*') ? 'active' : '' }}">Properties</a></li>
                         <li><a href="#">Services</a></li>
-                        <li><a href="{{ route('agents.index') }}">Agents</a></li>
-                        <li><a href="{{ route('contact') }}">Contact</a></li>
+                        <li><a href="{{ route('agents.index') }}" class="{{ request()->routeIs('agents.*') ? 'active' : '' }}">Agents</a></li>
+                        <li><a href="{{ route('contact') }}" class="{{ request()->routeIs('contact') ? 'active' : '' }}">Contact</a></li>
                         @guest
                             <li><a href="#" class="login-btn" id="login-btn-main">Login</a></li>
                         @else
@@ -260,29 +265,7 @@
         </div>
     </div>
 
-    <footer class="footer-section">
-      <div class="container footer-content">
-        <a href="{{ route('home') }}" class="footer-logo">
-          <img src="{{ asset('Images/Logo.png') }}" alt="Home Finders Coastal Logo">
-        </a>
-        <p class="footer-text">Discover your dream coastal home with us. Excellence in every detail.</p>
-        <div class="social-icons">
-          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-          <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <p>&copy; {{ date('Y') }} Home Finders Coastal. All Rights Reserved.</p>
-        <nav>
-          <ul class="footer-nav">
-            <li><a href="{{ route('agents.index') }}">Agents</a></li>
-            <li><a href="#">Privacy Policy</a></li>
-            <li><a href="#">Terms of Service</a></li>
-          </ul>
-        </nav>
-      </div>
-    </footer>
+    @include('layouts.footer')
 
     {{-- Blade -> JS Bridge --}}
     <script>
