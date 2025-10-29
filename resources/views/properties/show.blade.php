@@ -5,7 +5,37 @@
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/property-show.css') }}">
     <style>
+        .gallery-switcher {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .gallery-switcher button {
+            background: var(--navy-800);
+            color: var(--gold-500);
+            border: 1px solid var(--gold-500);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .gallery-switcher button.active, .gallery-switcher button:hover { background-color: var(--gold-500); color: var(--navy-900); }
         /* Agent Card Styles for Public Property Show Page Sidebar */
+        .gallery-switcher {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .gallery-switcher button {
+            background: var(--navy-800);
+            color: var(--gold-500);
+            border: 1px solid var(--gold-500);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .gallery-switcher button.active, .gallery-switcher button:hover { background-color: var(--gold-500); color: var(--navy-900); }
         .agent-sidebar-card {
             background: var(--navy-900); /* Darker background for contrast */
             border: 1px solid rgba(192, 168, 127, 0.35); /* Gold accent border */
@@ -65,58 +95,51 @@
         <!-- LEFT COLUMN: Property Details -->
         <section class="property-details-main">
 
-            @php
-                // Build gallery from /public/storage/properties/{id} plus hero first
-                $galleryImages = [];
-
-                // 1) Hero image first (normalize to web path under /storage)
-                if (!empty($property->hero_image)) {
-                    $hero = str_replace('\\', '/', $property->hero_image);
-                    // If only a filename was stored, prepend folder; if already has 'properties/', leave it
-                    if (!str_starts_with($hero, 'properties/')) {
-                        $hero = 'properties/' . $property->id . '/' . ltrim($hero, '/');
-                    }
-                    $galleryImages[] = $hero;
-                }
-
-                // 2) Read all images from /public/storage/properties/{id}
-                $folder = public_path('storage/properties/' . $property->id);
-                if (is_dir($folder)) {
-                    $allowed = ['jpg','jpeg','png','webp','gif','bmp','avif'];
-                    // scandir returns filenames on this folder
-                    $files = @scandir($folder) ?: [];
-                    foreach ($files as $f) {
-                        if ($f === '.' || $f === '..') continue;
-                        $ext = strtolower(pathinfo($f, PATHINFO_EXTENSION));
-                        if (!in_array($ext, $allowed, true)) continue;
-
-                        // Build web path like "properties/{id}/image.jpg"
-                        $webPath = 'properties/' . $property->id . '/' . $f;
-
-                        // Avoid duplicating hero if identical
-                        if (!in_array($webPath, $galleryImages, true)) {
-                            $galleryImages[] = $webPath;
-                        }
-                    }
-                }
-
-                // 3) Sort for stable order, keep hero first if present
-                if (!empty($galleryImages)) {
-                    $heroFirst = $galleryImages[0];
-                    $rest = array_slice($galleryImages, 1);
-                    sort($rest, SORT_NATURAL | SORT_FLAG_CASE);
-                    $galleryImages = array_merge([$heroFirst], $rest);
-                }
-            @endphp
+             @php
+                 // Prepare image galleries using the new accessors
+                 $heroImage = $property->hero_image ? [$property->hero_image] : [];
+                 $dawnImages = $property->dawn_image;
+                 $noonImages = $property->noon_image;
+                 $duskImages = $property->dusk_image;
+                 $generalImages = $property->general_images;
+ 
+                 // Determine if we should show the time-based switcher
+                 $hasTimeBasedGalleries = !empty($dawnImages) || !empty($noonImages) || !empty($duskImages);
+ 
+                 // The default gallery is noon if it exists, otherwise dawn, then dusk, then general
+                 $defaultGallery = $noonImages;
+                 $defaultGalleryName = 'noon';
+                 if (empty($defaultGallery)) { $defaultGallery = $dawnImages; $defaultGalleryName = 'dawn'; }
+                 if (empty($defaultGallery)) { $defaultGallery = $duskImages; $defaultGalleryName = 'dusk'; }
+                 if (empty($defaultGallery)) { $defaultGallery = $generalImages; $defaultGalleryName = 'general'; }
+ 
+                 // Prepend hero image to the default gallery and ensure uniqueness
+                 $initialGallery = $defaultGallery;
+             @endphp
+ 
+             {{-- Gallery Switcher Buttons --}}
+             @if($hasTimeBasedGalleries)
+                 <div class="gallery-switcher">
+                     @if(!empty($dawnImages))
+                         <button data-gallery="dawn" class="{{ $defaultGalleryName === 'dawn' ? 'active' : '' }}">Dawn</button>
+                     @endif
+                     @if(!empty($noonImages))
+                         <button data-gallery="noon" class="{{ $defaultGalleryName === 'noon' ? 'active' : '' }}">Noon</button>
+                     @endif
+                     @if(!empty($duskImages))
+                         <button data-gallery="dusk" class="{{ $defaultGalleryName === 'dusk' ? 'active' : '' }}">Dusk</button>
+                     @endif
+                 </div>
+             @endif
 
             {{-- Gallery Carousel --}}
-            @if(count($galleryImages) > 0)
+            @if(!empty($initialGallery))
                 <div class="carousel-container">
                     <div class="carousel-slides">
-                        @foreach($galleryImages as $index => $img)
+                        @foreach($initialGallery as $index => $img)
                             <div class="carousel-slide @if($index === 0) active @endif">
                                 {{-- assets are under /public/storage/... --}}
-                                <img src="{{ asset('storage/' . $img) }}" alt="Property image {{ $index + 1 }}">
+                                <img src="{{ asset('storage/' . $img) }}" alt="Property image {{ $index + 1 }}" data-gallery-image>
                             </div>
                         @endforeach
                         <button class="carousel-control prev" aria-label="Previous">&lsaquo;</button>
@@ -220,72 +243,140 @@
 <script>
     lucide.createIcons();
 
+    // Store galleries in a JS variable
+    const galleries = {
+        dawn: @json($dawnImages),
+        noon: @json($noonImages),
+        dusk: @json($duskImages),
+        general: @json($generalImages)
+    };
+
+    const assetBaseUrl = @json(asset('storage/'));
+
+    // Helper to get full URL
+    function getImageUrl(path) {
+        return `${assetBaseUrl}/${path}`;
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.carousel-container').forEach(setupCarousel);
-    });
+        const slideSpeed = 5000;
+        const inactivityTimeout = 10000;
+        let currentCarouselState = {}; // To hold state like intervals
 
-    function setupCarousel(carousel) {
-        const prevButton = carousel.querySelector('.carousel-control.prev');
-        const nextButton = carousel.querySelector('.carousel-control.next');
-        const slides = carousel.querySelectorAll('.carousel-slide');
-        let currentIndex = 0;
-        let autoPlayInterval;
-        let inactivityTimer;
-        const slideSpeed = 5000; // 5 seconds per slide
-        const inactivityTimeout = 10000; // Resume after 10s of inactivity
+        function setupCarousel(carousel) {
+            // Clear any existing slideshow intervals
+            if (currentCarouselState.autoPlayInterval) clearInterval(currentCarouselState.autoPlayInterval);
+            if (currentCarouselState.inactivityTimer) clearTimeout(currentCarouselState.inactivityTimer);
 
-        if (slides.length <= 1) {
-            if (prevButton) prevButton.style.display = 'none';
-            if (nextButton) nextButton.style.display = 'none';
-            return;
+            const prevButton = carousel.querySelector('.carousel-control.prev');
+            const nextButton = carousel.querySelector('.carousel-control.next');
+            const slides = carousel.querySelectorAll('.carousel-slide');
+            let currentIndex = 0;
+
+            // Detach old event listeners by cloning the buttons
+            const newPrevButton = prevButton.cloneNode(true);
+            const newNextButton = nextButton.cloneNode(true);
+            prevButton.parentNode.replaceChild(newPrevButton, prevButton);
+            nextButton.parentNode.replaceChild(newNextButton, nextButton);
+
+            if (slides.length <= 1) {
+                newPrevButton.style.display = 'none';
+                newNextButton.style.display = 'none';
+                return;
+            } else {
+                newPrevButton.style.display = 'block';
+                newNextButton.style.display = 'block';
+            }
+
+            const showSlide = (index) => {
+                if (index === currentIndex && slides[index]?.classList.contains('active')) return;
+                slides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === index);
+                });
+                currentIndex = index;
+            };
+
+            const prevSlide = () => {
+                const newIndex = (currentIndex - 1 + slides.length) % slides.length;
+                showSlide(newIndex);
+            };
+
+            const nextSlide = () => {
+                const newIndex = (currentIndex + 1) % slides.length;
+                showSlide(newIndex);
+            };
+
+            const stopSlideshow = () => {
+                clearInterval(currentCarouselState.autoPlayInterval);
+                clearTimeout(currentCarouselState.inactivityTimer);
+            };
+
+            const startSlideshow = () => {
+                stopSlideshow();
+                currentCarouselState.autoPlayInterval = setInterval(nextSlide, slideSpeed);
+            };
+
+            // Attach events to the new buttons
+            newPrevButton.addEventListener('click', () => {
+                prevSlide();
+                stopSlideshow();
+                currentCarouselState.inactivityTimer = setTimeout(startSlideshow, inactivityTimeout);
+            });
+
+            newNextButton.addEventListener('click', () => {
+                nextSlide();
+                stopSlideshow();
+                currentCarouselState.inactivityTimer = setTimeout(startSlideshow, inactivityTimeout);
+            });
+
+            // Auto-play with pause on hover
+            carousel.addEventListener('mouseenter', stopSlideshow);
+            carousel.addEventListener('mouseleave', startSlideshow);
+
+            startSlideshow();
         }
 
-        const showSlide = (index) => {
-            if (index === currentIndex && slides[index].classList.contains('active')) return;
-            slides.forEach((slide, i) => {
-                slide.classList.toggle('active', i === index);
+        // --- Initial Setup ---
+        const initialCarousel = document.querySelector('.carousel-container');
+        if (initialCarousel) {
+            setupCarousel(initialCarousel);
+        }
+
+        // --- Gallery Switcher Logic ---
+        const switcherButtons = document.querySelectorAll('.gallery-switcher button');
+        switcherButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const galleryName = this.dataset.gallery;
+                let newImages = galleries[galleryName];
+
+                // Normalize in case it's an object like { "0": "...", "2": "..." }
+                if (!Array.isArray(newImages)) {
+                    newImages = Object.values(newImages || {});
+                }
+
+                if (!newImages.length) return;
+
+                // Update active button
+                switcherButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+
+                // Rebuild carousel slides
+                const carousel = document.querySelector('.carousel-container');
+                const slidesContainer = carousel.querySelector('.carousel-slides');
+                slidesContainer.innerHTML = `
+                    ${newImages.map((img, index) => `
+                        <div class="carousel-slide ${index === 0 ? 'active' : ''}">
+                            <img src="${getImageUrl(img)}" alt="Property image ${index + 1}" data-gallery-image>
+                        </div>
+                    `).join('')}
+                    <button class="carousel-control prev" aria-label="Previous">&lsaquo;</button>
+                    <button class="carousel-control next" aria-label="Next">&rsaquo;</button>
+                `;
+
+                // Re-initialize the carousel logic for the new slides
+                setupCarousel(carousel);
             });
-            currentIndex = index;
-        };
-
-        const prevSlide = () => {
-            const newIndex = (currentIndex - 1 + slides.length) % slides.length;
-            showSlide(newIndex);
-        };
-
-        const nextSlide = () => {
-            const newIndex = (currentIndex + 1) % slides.length;
-            showSlide(newIndex);
-        };
-
-        const stopSlideshow = () => {
-            clearInterval(autoPlayInterval);
-            clearTimeout(inactivityTimer);
-        };
-
-        const startSlideshow = () => {
-            stopSlideshow(); // Ensure no multiple intervals are running
-            autoPlayInterval = setInterval(nextSlide, slideSpeed);
-        };
-
-        // Manual navigation
-        prevButton.addEventListener('click', () => {
-            prevSlide();
-            stopSlideshow(); // Stop autoplay on manual interaction
-            inactivityTimer = setTimeout(startSlideshow, inactivityTimeout); // Resume after a delay
         });
-
-        nextButton.addEventListener('click', () => {
-            nextSlide();
-            stopSlideshow();
-            inactivityTimer = setTimeout(startSlideshow, inactivityTimeout);
-        });
-
-        // Auto-play with pause on hover
-        carousel.addEventListener('mouseenter', stopSlideshow);
-        carousel.addEventListener('mouseleave', startSlideshow);
-
-        startSlideshow(); // Start the slideshow initially
-    }
+    });
 </script>
 @endpush

@@ -5,7 +5,18 @@
 
 @section('content')
     @push('styles')
-    {{-- Page-specific styles can go here if needed --}}
+    <style>
+        .image-preview { display: flex; flex-wrap: wrap; gap: 1rem; }
+        .image-delete-container { position: relative; }
+        .image-delete-container img { display: block; max-width: 150px; height: auto; }
+        .delete-checkbox {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 2px;
+        }
+    </style>
     @endpush
 
     <a href="{{ route('admin.properties.list') }}" class="back-link">&larr; Back to All Properties</a>
@@ -71,6 +82,9 @@
                 </div>
             </div>
 
+            {{-- Special Type --}}
+            @include('admin.properties._form-special-type')
+
             <div class="flex-grid">
                 <div class="form-group">
                     <label for="city">City</label>
@@ -116,29 +130,75 @@
             </div>
 
             <div class="form-group">
-                <label for="hero">Hero Image (Main Picture)</label>
-                @if($property->hero_image)
-                    <div class="image-preview">
-                        <img src="{{ asset('storage/' . $property->hero_image) }}" alt="Hero Image" style="max-width: 200px;">
-                    </div>
-                @endif
-                <input type="file" id="hero_image" name="hero_image" accept="image/webp,image/jpeg,image/png">
+                <label for="dawn_image">Dawn Images (Select multiple to add more)</label>
+                <div class="image-preview">
+                    @foreach($property->images()->where('time_of_day', 'dawn')->get() as $image)
+                        <div class="image-delete-container">
+                            <img src="{{ asset('storage/' . $image->path) }}" alt="Dawn Image">
+                            <div class="delete-checkbox"><input type="checkbox" name="delete_images[]" value="{{ $image->id }}" title="Mark for deletion"></div>
+                        </div>
+                    @endforeach
+                </div>
+                <input type="file" id="dawn_image" name="dawn_image[]" multiple accept="image/webp,image/jpeg,image/png">
+                @error('dawn_image')
+                    <div class="error">{{ $message }}</div>
+                @enderror
             </div>
 
             <div class="form-group">
+                <label for="noon_image">Noon Images (Select multiple to add more)</label>
+                <div class="image-preview">
+                    @foreach($property->images()->where('time_of_day', 'noon')->get() as $image)
+                        <div class="image-delete-container">
+                            <img src="{{ asset('storage/' . $image->path) }}" alt="Noon Image">
+                            <div class="delete-checkbox"><input type="checkbox" name="delete_images[]" value="{{ $image->id }}" title="Mark for deletion"></div>
+                        </div>
+                    @endforeach
+                </div>
+                <input type="file" id="noon_image" name="noon_image[]" multiple accept="image/webp,image/jpeg,image/png">
+                @error('noon_image')
+                    <div class="error">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group">
+                <label for="dusk_image">Dusk Images (Select multiple to add more)</label>
+                <div class="image-preview">
+                    @foreach($property->images()->where('time_of_day', 'dusk')->get() as $image)
+                        <div class="image-delete-container">
+                            <img src="{{ asset('storage/' . $image->path) }}" alt="Dusk Image">
+                            <div class="delete-checkbox"><input type="checkbox" name="delete_images[]" value="{{ $image->id }}" title="Mark for deletion"></div>
+                        </div>
+                    @endforeach
+                </div>
+                <input type="file" id="dusk_image" name="dusk_image[]" multiple accept="image/webp,image/jpeg,image/png">
+                @error('dusk_image')
+                    <div class="error">{{ $message }}</div>
+                @enderror
+            </div>
+
+            {{-- The original hero_image field was removed in the previous diff.
+                 If you wish to re-introduce a single "Hero Image" alongside these galleries,
+                 please let me know, and I can provide the necessary changes. --}}
+
+            <div class="form-group">
                 <label for="images">Image Gallery (Select multiple to add more)</label>
-                @if($property->images)
-                    <div class="image-preview">
-                        @foreach($property->images as $image)
-                            <img src="{{ asset('storage/' . $image) }}" alt="Gallery Image">
-                        @endforeach
-                    </div>
-                @endif
+                <div class="image-preview">
+                    @foreach($property->images()->where('time_of_day', 'general')->get() as $image)
+                        <div class="image-delete-container">
+                            <img src="{{ asset('storage/' . $image->path) }}" alt="Gallery Image">
+                            <div class="delete-checkbox"><input type="checkbox" name="delete_images[]" value="{{ $image->id }}" title="Mark for deletion"></div>
+                        </div>
+                    @endforeach
+                </div>
                 <input type="file" id="images" name="images[]" multiple accept="image/webp,image/jpeg,image/png">
             </div>
 
             @include('admin.properties._form-visibility')
 
-            <button type="submit">Update Property</button>
+            <div class="form-actions">
+                <button type="submit" name="action" value="update_property">Update Property</button>
+                <button type="submit" name="action" value="delete_images" class="btn-danger" formnovalidate>Delete Selected Images</button>
+            </div>
         </form>
 @endsection

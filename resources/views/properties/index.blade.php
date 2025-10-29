@@ -61,7 +61,7 @@
       @endif
       <div class="property-card @if($isVisuallyRestricted) is-restricted @endif" style="position: relative;">
         <div class="property-image"
-             style="background-image:url('{{ $p->hero_image ? asset('storage/'.$p->hero_image) : asset('Image/category1.webp') }}');
+             style="background-image:url('{{ $p->hero_image ? asset('storage/' . $p->hero_image) : asset('Image/category1.webp') }}');
                     {{ $isVisuallyRestricted ? 'filter: blur(12px); transform: scale(1.1);' : '' }}">
         </div>
         <div class="property-card-content">

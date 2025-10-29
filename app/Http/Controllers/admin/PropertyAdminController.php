@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Agent;
 use App\Models\Property;
+use App\Models\PropertyImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -40,63 +41,56 @@ class PropertyAdminController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'agent_id'    => 'required|exists:agents,id',
-            'title'       => 'required|string|max:255',
-            'description' => 'required|string',
-            'price'       => 'required|numeric|min:0',
-            'type'        => 'required|in:house,apartment,townhouse,vacant_land,commercial',
-            'bedrooms'    => 'required|integer|min:0',
-            'bathrooms'   => 'required|integer|min:0',
-            'floor_size'  => 'nullable|numeric|min:0',
-            'erf_size'    => 'nullable|numeric|min:0',
-            'city'        => 'required|string|max:255',
-            'suburb'      => 'required|string|max:255',
-
-            // Accept either key on create:
-            'hero_image'  => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
-            'hero'        => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
-
-            'images'      => 'nullable|array|max:500', // Set a max number of files
-            'images.*'    => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
-            'is_visible'  => 'required|boolean',
+            'agent_id'     => 'required|exists:agents,id',
+            'title'        => 'required|string|max:255',
+            'description'  => 'required|string',
+            'price'        => 'required|numeric|min:0',
+            'type'         => 'required|in:house,apartment,townhouse,vacant_land,commercial',
+            'bedrooms'     => 'required|integer|min:0',
+            'bathrooms'    => 'required|integer|min:0',
+            'floor_size'   => 'nullable|numeric|min:0',
+            'erf_size'     => 'nullable|numeric|min:0',
+            'city'         => 'required|string|max:255',
+            'suburb'       => 'required|string|max:255',
+            'is_visible'   => 'required|boolean',
             'is_exclusive' => 'required|boolean',
+            'special_type' => 'nullable|string',
+            'images'       => 'nullable|array',
+            'images.*'     => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
+            'dawn_image'   => 'nullable|array',
+            'dawn_image.*' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
+            'noon_image'   => 'nullable|array',
+            'noon_image.*' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
+            'dusk_image'   => 'nullable|array',
+            'dusk_image.*' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
         ]);
 
-        // Slug
         $validated['slug'] = Str::slug($validated['title']);
+        $validated['status'] = 'for_sale'; // Default status
 
-        // Remove temp file inputs from mass assignment
-        unset($validated['hero_image'], $validated['hero'], $validated['images']);
-
-        // Handle checkboxes explicitly
-        $validated['is_visible'] = $request->boolean('is_visible');
-        $validated['is_exclusive'] = $request->boolean('is_exclusive');
-
-        // Create first to get ID
         $property = Property::create($validated);
 
         $directory = 'properties/' . $property->id;
 
-        // Hero upload (prefer hero_image, fallback to hero)
-        if ($request->hasFile('hero_image')) {
-            $path = $request->file('hero_image')->store($directory, 'public');
-            $property->hero_image = $path;
-        } elseif ($request->hasFile('hero')) {
-            $path = $request->file('hero')->store($directory, 'public');
-            $property->hero_image = $path;
-        }
+        $imageGroups = [
+            'images'     => 'general',
+            'dawn_image' => 'dawn',
+            'noon_image' => 'noon',
+            'dusk_image' => 'dusk',
+        ];
 
-        // Gallery images
-        if ($request->hasFile('images')) {
-            $imagePaths = [];
-            foreach ($request->file('images') as $file) {
-                $imagePaths[] = $file->store($directory, 'public');
+        foreach ($imageGroups as $inputName => $timeOfDay) {
+            if ($request->hasFile($inputName)) {
+                foreach ($request->file($inputName) as $file) {
+                    $path = $file->store($directory, 'public');
+                    $property->images()->create([
+                        'path'        => $path,
+                        'time_of_day' => $timeOfDay,
+                    ]);
+                }
             }
-            $property->images = $imagePaths; // requires casts on model
         }
-
-        $property->save();
-
+    
         return redirect()->route('admin.properties.list')
             ->with('success', 'Property created successfully.');
     }
@@ -115,6 +109,24 @@ class PropertyAdminController extends Controller
      */
     public function update(Request $request, Property $property)
     {
+        // Handle image deletion first if that's the requested action
+        if ($request->input('action') === 'delete_images') {
+            $request->validate(['delete_images' => 'nullable|array']);
+
+            if ($request->has('delete_images')) {
+                $imagesToDelete = PropertyImage::whereIn('id', $request->input('delete_images'))
+                    ->where('property_id', $property->id) // Ensure images belong to the property
+                    ->get();
+
+                foreach ($imagesToDelete as $image) {
+                    Storage::disk('public')->delete($image->path);
+                    $image->delete();
+                }
+            }
+            return redirect()->route('admin.properties.edit', $property)->with('success', 'Selected images have been deleted.');
+        }
+
+        // Proceed with full property update
         $validated = $request->validate([
             'agent_id'    => 'required|exists:agents,id',
             'title'       => 'required|string|max:255',
@@ -128,48 +140,54 @@ class PropertyAdminController extends Controller
             'city'        => 'required|string|max:255',
             'suburb'      => 'required|string|max:255',
 
-            'hero_image'  => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
             'status'      => 'required|in:for_sale,for_rent,sold,rented',
             // allow gallery additions on update
-            'images'      => 'nullable|array|max:500', // Set a max number of files
+            'images'      => 'nullable|array',
             'images.*'    => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
+            'dawn_image'   => 'nullable|array',
+            'dawn_image.*' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
+            'noon_image'   => 'nullable|array',
+            'noon_image.*' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
+            'dusk_image'   => 'nullable|array',
+            'dusk_image.*' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
             'is_visible'  => 'required|boolean',
             'is_exclusive' => 'required|boolean',
+            'special_type' => 'nullable|string',
+            'delete_images' => 'nullable|array',
         ]);
 
         // Slug
         $validated['slug'] = Str::slug($validated['title']);
-
-        $directory = 'properties/' . $property->id;
-
-        // Replace hero image (delete old file only)
-        if ($request->hasFile('hero_image')) {
-            if ($property->hero_image) {
-                Storage::disk('public')->delete($property->hero_image);
-            }
-            $validated['hero_image'] = $request->file('hero_image')->store($directory, 'public');
-        }
-
-        // Remove temp gallery input before update()
-        unset($validated['images']);
 
         // Handle checkboxes explicitly
         $validated['is_visible'] = $request->boolean('is_visible');
         $validated['is_exclusive'] = $request->boolean('is_exclusive');
         $property->update($validated);
 
-        // Append new gallery images
-        if ($request->hasFile('images')) {
-            $existing = $property->images ?? [];
-            foreach ($request->file('images') as $file) {
-                $existing[] = $file->store($directory, 'public');
+        // Define the image groups and their corresponding time_of_day value
+        $imageGroups = [
+            'images'     => 'general',
+            'dawn_image' => 'dawn',
+            'noon_image' => 'noon',
+            'dusk_image' => 'dusk',
+        ];
+
+        $directory = 'properties/' . $property->id;
+        
+        foreach ($imageGroups as $inputName => $timeOfDay) {
+            if ($request->hasFile($inputName)) {
+                foreach ($request->file($inputName) as $file) {
+                    $path = $file->store($directory, 'public');
+                    $property->images()->create([
+                        'path'        => $path,
+                        'time_of_day' => $timeOfDay,
+                    ]);
+                }
             }
-            $property->images = $existing;
-            $property->save();
         }
 
-        return redirect()->route('admin.properties.list')
-            ->with('success', 'Property updated successfully.');
+        return redirect()->route('admin.properties.edit', $property)
+                         ->with('success', 'Property updated successfully.');
     }
 
     /**

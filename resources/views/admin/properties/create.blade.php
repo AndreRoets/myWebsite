@@ -70,6 +70,8 @@
                 </div>
             </div>
 
+            @include('admin.properties._form-special-type')
+
             <div class="flex-grid">
                 <div class="form-group">
                     <label for="city">City</label>
@@ -142,9 +144,23 @@
             </div>
 
             <div class="form-group">
-                <label for="hero">Hero Image (Main Picture)</label>
-                <input type="file" id="hero" name="hero_image" accept="image/webp,image/jpeg,image/png" class="@error('hero_image') is-invalid @enderror">
-                @error('hero')
+                <label for="dawn_image">Dawn Images (Select multiple)</label>
+                <input type="file" id="dawn_image" name="dawn_image[]" multiple accept="image/webp,image/jpeg,image/png" class="@error('dawn_image') is-invalid @enderror">
+                @error('dawn_image')
+                    <div class="error">{{ $message }}</div>
+                @enderror
+            </div>
+            <div class="form-group">
+                <label for="noon_image">Noon Images (Select multiple)</label>
+                <input type="file" id="noon_image" name="noon_image[]" multiple accept="image/webp,image/jpeg,image/png" class="@error('noon_image') is-invalid @enderror">
+                @error('noon_image')
+                    <div class="error">{{ $message }}</div>
+                @enderror
+            </div>
+            <div class="form-group">
+                <label for="dusk_image">Dusk Images (Select multiple)</label>
+                <input type="file" id="dusk_image" name="dusk_image[]" multiple accept="image/webp,image/jpeg,image/png" class="@error('dusk_image') is-invalid @enderror">
+                @error('dusk_image')
                     <div class="error">{{ $message }}</div>
                 @enderror
             </div>
