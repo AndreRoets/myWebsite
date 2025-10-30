@@ -30,14 +30,14 @@
         .auth-modal {
             background: var(--navy-900, #111827);
             color: var(--text-100, #f1f1f1);
-            padding: 2rem;
-            border-radius: 8px;
+            padding: 2rem 2rem; /* equal padding both sides */
+            border-radius: 0;
             width: 90%;
-            max-width: 450px;
+            max-width: 480px; /* optional: a touch wider */
             position: relative;
             border: 1px solid var(--gold-500, #c0a87f);
-        }
-        .auth-modal-close {
+            box-sizing: border-box;
+        }.auth-modal-close {
             position: absolute;
             top: 1rem;
             right: 1rem;
@@ -47,9 +47,14 @@
             font-size: 1.5rem;
             cursor: pointer;
         }
+        .auth-modal * {
+            box-sizing: border-box;
+        }
         .auth-modal-tabs {
             display: flex;
-            border-bottom: 1px solid var(--gold-500);
+            gap: 0;
+            padding: 0;
+            margin: 0 0 1.5rem 0;
             margin-bottom: 1.5rem;
         }
         .auth-modal-tabs button {
@@ -61,11 +66,12 @@
             cursor: pointer;
             font-size: 1.1rem;
             font-family: "Playfair Display", serif;
+            border-bottom: 2px solid transparent;
             transition: color 0.3s;
         }
         .auth-modal-tabs button.active {
             color: var(--gold-500);
-            border-bottom: 2px solid var(--gold-500);
+            border-bottom-color: var(--gold-500);
         }
         .auth-modal-content {
             display: none;
@@ -74,23 +80,25 @@
             display: block;
         }
         .auth-modal form .form-group {
-            margin-bottom: 1rem;
+            margin: 0 0 1rem 0;
         }
         .auth-modal form label {
             display: block;
             margin-bottom: 0.5rem;
             color: var(--text-200);
         }
+        /* Inputs: true full-width, even gutters */
         .auth-modal form input {
-            width: 100%;
-            padding: 0.75rem;
+            width: 100% !important;       /* ensure nothing overrides it */
+            padding: 0.75rem 1rem;
             background: #1f2937; /* dark slate */
-            border: 1px solid #4b5563; /* gray border */
-            border-radius: 4px;
+            border: 1px solid #4b5563;
+            border-radius: 0;
             color: #f9fafb; /* near white text */
             font-family: "Montserrat", sans-serif;
+            outline: none;
         }
-
+        /* Focus ring in your gold */
         .auth-modal form input:focus {
             outline: 0;
             border-color: var(--gold-500, #c0a87f);
@@ -101,9 +109,42 @@
             color: #c0392b; font-size:0.8rem; margin-top:0.4rem;
         }
 
+        /* Make the action button align perfectly too */
+        .auth-modal .hero-btn {
+            display: inline-block;
+            width: 100%;
+            padding: 0.9rem 1rem;
+            border-radius: 0;
+        }
+
         /* Active navigation link style */
         .nav-links a.active {
             color: var(--gold-500, #c0a87f);
+        }
+
+        /* Favorite Button Styles */
+        .favorite-form {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+        }
+        .favorite-btn {
+            background: rgba(17, 24, 39, 0.7);
+            border: 1px solid var(--gold-500);
+            color: var(--gold-500);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .favorite-btn:hover {
+            background: var(--gold-500);
+            color: var(--navy-900);
         }
     </style>
     @stack('styles')
@@ -129,7 +170,7 @@
                                 @if (Auth::user()->isAdmin())
                                     <li><a href="{{ route('admin.dashboard') }}">Admin</a></li>
                                 @endif
-                                <li><a href="{{ route('profile.show') }}">Profile</a></li>
+                                <li><a href="{{ route('profile.show') }}" class="login-btn" id="profile-btn">Profile</a></li>
                             @endguest
                         </ul>
                     </nav>
@@ -156,7 +197,7 @@
                             @if (Auth::user()->isAdmin())
                                 <li><a href="{{ route('admin.dashboard') }}">Admin</a></li>
                             @endif
-                            <li><a href="{{ route('profile.show') }}">Profile</a></li>
+                            <li><a href="{{ route('profile.show') }}" class="login-btn" id="profile-btn">Profile</a></li>
                         @endguest
                     </ul>
                 </nav>
@@ -206,7 +247,7 @@
                         @enderror
                     </div>
                     <div class="form-group">
-                        <button type="submit" class="hero-btn" style="width: 100%;">{{ __('Login') }}</button>
+                        <button type="submit" class="hero-btn">{{ __('Login') }}</button>
                     </div>
                     @if (Route::has('password.request'))
                         <a class="clear-link" href="{{ route('password.request') }}">
@@ -257,7 +298,7 @@
                             @enderror
                         </div>
                         <div class="form-group">
-                            <button type="submit" class="hero-btn" style="width: 100%;">{{ __('Register') }}</button>
+                            <button type="submit" class="hero-btn">{{ __('Register') }}</button>
                         </div>
                     </form>
                 </div>
@@ -283,7 +324,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         const modalOverlay = document.getElementById('auth-modal-overlay');
         const modal = document.getElementById('auth-modal');
-        const openButtons = document.querySelectorAll('.login-btn');
+        const openButtons = document.querySelectorAll('#login-btn-hero, #login-btn-main');
         const closeButton = document.getElementById('auth-modal-close');
 
         const loginTabBtn = document.getElementById('login-tab-btn');
@@ -350,6 +391,27 @@
             activateRegisterTab();
         }
     });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const footer = document.querySelector('.site-footer');
+
+            if (footer) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            footer.classList.add('footer-in-view');
+                            // We can unobserve after the animation is triggered to save resources
+                            observer.unobserve(footer);
+                        }
+                    });
+                }, {
+                    threshold: 0.1 // Trigger when 10% of the footer is visible
+                });
+
+                observer.observe(footer);
+            }
+        });
     </script>
     @stack('scripts')
 </body>
