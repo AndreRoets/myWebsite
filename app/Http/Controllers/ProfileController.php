@@ -15,6 +15,7 @@ class ProfileController extends Controller
     public function show()
     {
         $user = Auth::user();
-        return view('profile.show', compact('user'));
+        $savedSearches = $user->savedSearches()->latest()->get();
+        return view('profile.show', compact('user', 'savedSearches'));
     }
 }

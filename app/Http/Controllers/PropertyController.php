@@ -15,13 +15,18 @@ class PropertyController extends Controller
         $query = Property::query()->latest()->whereIn('status', ['for_sale', 'for_rent']);
 
         // Apply filters if they are present in the request
-        $query->when($request->filled('type'), fn($q) => $q->where('type', $request->type));
-        $query->when($request->filled('beds'), fn($q) => $q->where('bedrooms', '>=', $request->beds));
-        $query->when($request->filled('min'), fn($q) => $q->where('price', '>=', $request->min));
-        $query->when($request->filled('max'), fn($q) => $q->where('price', '<=', $request->max));
+        $query->when($request->filled('property_type'), fn($q) => $q->where('type', $request->property_type));
+        $query->when($request->filled('price_min'), fn($q) => $q->where('price', '>=', $request->price_min));
+        $query->when($request->filled('price_max'), fn($q) => $q->where('price', '<=', $request->price_max));
+        $query->when($request->filled('bedrooms'), fn($q) => $q->where('bedrooms', '>=', $request->bedrooms));
+        $query->when($request->filled('bathrooms'), fn($q) => $q->where('bathrooms', '>=', $request->bathrooms));
+        $query->when($request->filled('location'), fn($q) => $q->where('location', 'like', '%' . $request->location . '%'));
 
-        // Paginate the results and append query string values to pagination links
-        $properties = $query->paginate(9)->withQueryString();
+        $properties = $query->paginate(9);
+
+        if ($request->expectsJson()) {
+            return response()->json($properties->items());
+        }
 
         return view('properties.index', compact('properties'));
     }
@@ -50,5 +55,27 @@ class PropertyController extends Controller
             ->get();
 
         return view('properties.show', compact('property', 'related'));
+    }
+
+    public function search()
+    {
+        return view('properties.search');
+    }
+
+    public function results(Request $request)
+    {
+        $query = Property::query()->latest()->whereIn('status', ['for_sale', 'for_rent']);
+
+        // Apply filters if they are present in the request
+        $query->when($request->filled('property_type'), fn($q) => $q->where('type', $request->property_type));
+        $query->when($request->filled('price_min'), fn($q) => $q->where('price', '>=', $request->price_min));
+        $query->when($request->filled('price_max'), fn($q) => $q->where('price', '<=', $request->price_max));
+        $query->when($request->filled('bedrooms'), fn($q) => $q->where('bedrooms', '>=', $request->bedrooms));
+        $query->when($request->filled('bathrooms'), fn($q) => $q->where('bathrooms', '>=', $request->bathrooms));
+        $query->when($request->filled('location'), fn($q) => $q->where('location', 'like', '%' . $request->location . '%'));
+
+        $properties = $query->paginate(9);
+
+        return view('properties.results', compact('properties'));
     }
 }

@@ -68,4 +68,12 @@ class User extends Authenticatable
     {
         return $this->is_approved;
     }
+
+    /**
+     * Get the saved searches for the user.
+     */
+    public function savedSearches()
+    {
+        return $this->hasMany(SavedSearch::class);
+    }
 }

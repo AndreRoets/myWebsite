@@ -18,6 +18,8 @@ Route::get('/agents/{agent}', [AgentController::class, 'show'])->name('agents.sh
 
 Route::prefix('properties')->group(function () {
     Route::get('/', [PropertyController::class, 'index'])->name('properties.index');
+    Route::get('/search', [PropertyController::class, 'search'])->name('properties.search');
+    Route::get('/results', [PropertyController::class, 'results'])->name('properties.results');
     Route::get('/{property:slug}', [PropertyController::class, 'show'])->name('properties.show');
 });
 
@@ -62,4 +64,9 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout')->middl
 Route::middleware('auth')->group(function () {
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+
+    // Saved Searches Routes
+    Route::post('/saved-searches', [App\Http\Controllers\SavedSearchController::class, 'store'])->name('saved-searches.store');
+    Route::get('/saved-searches/{savedSearch}/execute', [App\Http\Controllers\SavedSearchController::class, 'execute'])->name('saved-searches.execute');
+    Route::delete('/saved-searches/{savedSearch}', [App\Http\Controllers\SavedSearchController::class, 'destroy'])->name('saved-searches.destroy');
 });
