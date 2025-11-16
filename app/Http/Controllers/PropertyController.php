@@ -12,7 +12,7 @@ class PropertyController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Property::query()->latest()->whereIn('status', ['for_sale', 'for_rent']);
+        $query = Property::with('images')->latest()->whereIn('status', ['for_sale', 'for_rent']);
 
         // Apply filters if they are present in the request
         $query->when($request->filled('property_type'), fn($q) => $q->where('type', $request->property_type));
@@ -36,6 +36,7 @@ class PropertyController extends Controller
      */
     public function show(Property $property)
     {
+        $property->load('images');
         // Check if the property is restricted and if the user is allowed to see it.
         $isRestrictedForUser = !$property->is_visible && (!auth()->check() || !auth()->user()->isApproved());
 
@@ -47,7 +48,7 @@ class PropertyController extends Controller
         }
 
         // Fetch related properties (example: same type, different property)
-        $related = Property::where('type', $property->type)
+        $related = Property::with('images')->where('type', $property->type)
             ->where('id', '!=', $property->id)
             ->latest()
             ->where('is_visible', true) // Only show visible related properties
@@ -64,7 +65,7 @@ class PropertyController extends Controller
 
     public function results(Request $request)
     {
-        $query = Property::query()->latest()->whereIn('status', ['for_sale', 'for_rent']);
+        $query = Property::with('images')->latest()->whereIn('status', ['for_sale', 'for_rent']);
 
         // Apply filters if they are present in the request
         $query->when($request->filled('property_type'), fn($q) => $q->where('type', $request->property_type));
