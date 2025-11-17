@@ -60,7 +60,8 @@ class PropertyController extends Controller
 
     public function search()
     {
-        return view('properties.search');
+        $propertyTypes = Property::select('type')->distinct()->whereNotNull('type')->pluck('type');
+        return view('properties.search', compact('propertyTypes'));
     }
 
     public function results(Request $request)
@@ -75,8 +76,14 @@ class PropertyController extends Controller
         $query->when($request->filled('bathrooms'), fn($q) => $q->where('bathrooms', '>=', $request->bathrooms));
         $query->when($request->filled('location'), fn($q) => $q->where('location', 'like', '%' . $request->location . '%'));
 
-        $properties = $query->paginate(9);
+        // We only want to pass valid filter keys to the paginator's appends method.
+        $validFilterKeys = ['property_type', 'price_min', 'price_max', 'bedrooms', 'bathrooms', 'location', 'saved_search_id'];
+        $filters = $request->only($validFilterKeys);
 
-        return view('properties.results', compact('properties'));
+        $properties = $query->paginate(9)->appends($filters);
+
+        $propertyTypes = Property::select('type')->distinct()->whereNotNull('type')->pluck('type');
+
+        return view('properties.results', compact('properties', 'filters', 'propertyTypes'));
     }
 }

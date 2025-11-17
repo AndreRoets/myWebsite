@@ -51,10 +51,41 @@ class SavedSearchController extends Controller
             abort(403);
         }
 
+        // The filters are likely stored as a JSON string or cast to an array.
+        // We ensure it's an array before using it.
+        $filters = is_array($savedSearch->filters) ? $savedSearch->filters : json_decode($savedSearch->filters, true);
+
+        // This is the key change: we add the saved_search_id to the query parameters.
+        // This will make the "Update This Search" button appear on the results page.
+        $queryParams = array_merge($filters, ['saved_search_id' => $savedSearch->id]);
+
         // Redirect to the property search page with the filters applied
-        return redirect()->route('properties.results', $savedSearch->filters);
+        return redirect()->route('properties.results', $queryParams);
     }
 
+    /**
+     * Update the specified saved search in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\SavedSearch  $savedSearch
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(Request $request, SavedSearch $savedSearch)
+    {
+        // Ensure the user can only update their own searches
+        if (Auth::id() !== $savedSearch->user_id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $validated = $request->validate([
+            'filters' => 'required|array',
+        ]);
+
+        $savedSearch->filters = $validated['filters'];
+        $savedSearch->save();
+
+        return response()->json(['success' => true, 'message' => 'Search updated successfully!']);
+    }
     /**
      * Remove the specified saved search from storage.
      */

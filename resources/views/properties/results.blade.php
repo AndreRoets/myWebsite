@@ -6,6 +6,59 @@
 <div class="container" style="padding-top: 2rem; padding-bottom: 2rem;">
     <h1>Property Search Results</h1>
 
+    <div class="filter-section-container">
+        <button id="toggleFiltersBtn" class="btn btn-secondary" style="margin-bottom: 1rem;">Show Filters</button>
+        <div id="filterSection" class="advanced-search-form" style="display: none; margin-bottom: 2rem; background: #f8f9fa; padding: 1.5rem; border-radius: 8px;">
+            <form id="propertySearchForm" action="{{ route('properties.results') }}" method="GET">
+                {{-- This hidden input preserves the saved_search_id when re-filtering --}}
+                @if(isset($filters['saved_search_id']) && $filters['saved_search_id'])
+                    <input type="hidden" name="saved_search_id" value="{{ $filters['saved_search_id'] }}">
+                @endif
+
+                <div class="form-group">
+                    <label for="property_type">Property Type:</label>
+                    <select id="property_type" name="property_type" class="form-control">
+                        <option value="">Any</option>
+                        @foreach($propertyTypes as $type)
+                            <option value="{{ $type }}" @selected(isset($filters['property_type']) && $filters['property_type'] === $type)>
+                                {{ ucfirst(str_replace('_', ' ', $type)) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="price_min">Min Price:</label>
+                    <input type="number" id="price_min" name="price_min" class="form-control" placeholder="Min Price" value="{{ $filters['price_min'] ?? '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="price_max">Max Price:</label>
+                    <input type="number" id="price_max" name="price_max" class="form-control" placeholder="Max Price" value="{{ $filters['price_max'] ?? '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="bedrooms">Min. Bedrooms:</label>
+                    <input type="number" id="bedrooms" name="bedrooms" class="form-control" min="0" placeholder="Any" value="{{ $filters['bedrooms'] ?? '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="bathrooms">Min. Bathrooms:</label>
+                    <input type="number" id="bathrooms" name="bathrooms" class="form-control" min="0" placeholder="Any" value="{{ $filters['bathrooms'] ?? '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="location">Location:</label>
+                    <input type="text" id="location" name="location" class="form-control" placeholder="e.g., Suburb, City" value="{{ $filters['location'] ?? '' }}">
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="search-results">
         @if ($properties->isEmpty())
             <p>No properties found matching your criteria.</p>
@@ -30,15 +83,20 @@
             </div>
 
             <div class="pagination-container">
-                {{ $properties->appends(request()->query())->links() }}
+                {{ $properties->links() }}
             </div>
         @endif
     </div>
 
     @auth
     <div class="save-search-container" style="margin-top: 2rem;">
-        <button class="btn btn-primary" id="saveSearchButton">Save This Search</button>
+        @if(!empty($filters['saved_search_id']))
+            <button class="btn btn-primary" id="updateSearchButton">Update This Search</button>
+        @else
+            <button class="btn btn-primary" id="saveSearchButton">Save This Search</button>
+        @endif
     </div>
+
 
     <!-- Save Search Modal -->
     <div id="saveSearchModal" class="save-search-modal" style="display: none;">
@@ -176,7 +234,19 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // --- Logic for collapsible filter section ---
+    const toggleBtn = document.getElementById('toggleFiltersBtn');
+    const filterSection = document.getElementById('filterSection');
+    if (toggleBtn && filterSection) {
+        toggleBtn.addEventListener('click', function() {
+            const isHidden = filterSection.style.display === 'none';
+            filterSection.style.display = isHidden ? 'block' : 'none';
+            this.textContent = isHidden ? 'Hide Filters' : 'Show Filters';
+        });
+    }
+
     @auth
+    // --- Logic for Saving a NEW search ---
     const saveSearchButton = document.getElementById('saveSearchButton');
     const modal = document.getElementById('saveSearchModal');
     const closeButton = modal.querySelector('.close-button');
@@ -261,6 +331,63 @@ document.addEventListener('DOMContentLoaded', function () {
             errorDiv.style.display = 'block';
         }
     });
+
+    // --- Logic for UPDATING an existing search ---
+    const updateSearchButton = document.getElementById('updateSearchButton');
+    if (updateSearchButton) {
+        updateSearchButton.addEventListener('click', function() {
+            if (!confirm('Are you sure you want to update this saved search with the current filters?')) {
+                return;
+            }
+
+            updateSearchButton.disabled = true;
+            updateSearchButton.textContent = 'Updating...';
+
+            const savedSearchId = @json($filters['saved_search_id'] ?? null);
+            const token = document.querySelector('meta[name="csrf-token"]')?.content;
+
+            // Get current filters from the form on the page to ensure we save the latest changes.
+            const form = document.getElementById('propertySearchForm');
+            const formData = new FormData(form);
+            const currentFilters = {};
+            for (const [key, value] of formData.entries()) {
+                if (value && key !== 'saved_search_id') currentFilters[key] = value;
+            }
+
+            fetch(`/saved-searches/${savedSearchId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    filters: currentFilters
+                })
+            })
+            .then(async (res) => {
+                const data = await res.json();
+                if (!res.ok) {
+                    const error = new Error(data.message || `HTTP error! status: ${res.status}`);
+                    error.errors = data.errors;
+                    throw error;
+                }
+                return data;
+            })
+            .then(data => {
+                // On success, redirect to the profile page to show the updated search.
+                window.location.href = '{{ route('profile.show') }}?status=search-updated';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(error.message || 'An unknown error occurred while updating the search.');
+            })
+            .finally(() => {
+                updateSearchButton.disabled = false;
+                updateSearchButton.textContent = 'Update This Search';
+            });
+        });
+    }
 
     // This is the old logic, which I've commented out and replaced above.
     /* if (saveSearchButton) {

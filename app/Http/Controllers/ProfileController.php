@@ -16,6 +16,11 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
         $savedSearches = $user->savedSearches()->latest()->get();
+        $savedSearches = $user->savedSearches()
+                              ->withCount('properties') // Example of a future enhancement
+                              ->latest()
+                              ->get();
+
         return view('profile.show', compact('user', 'savedSearches'));
     }
 }

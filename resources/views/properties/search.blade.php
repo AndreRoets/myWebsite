@@ -10,12 +10,13 @@
         <form id="propertySearchForm" action="{{ route('properties.results') }}" method="GET">
             <div class="form-group">
                 <label for="property_type">Property Type:</label>
-                <select id="property_type" name="property_type" class="form-control" value="{{ request('property_type') }}">
+                <select id="property_type" name="property_type" class="form-control">
                     <option value="">Any</option>
-                    <option value="house" @selected(request('property_type') === 'house')>House</option>
-                    <option value="apartment" @selected(request('property_type') === 'apartment')>Apartment</option>
-                    <option value="condo" @selected(request('property_type') === 'condo')>Condo</option>
-                    <option value="land" @selected(request('property_type') === 'land')>Land</option>
+                    @foreach($propertyTypes as $type)
+                        <option value="{{ $type }}" @selected(request('property_type') === $type)>
+                            {{ ucfirst(str_replace('_', ' ', $type)) }}
+                        </option>
+                    @endforeach
                 </select>
             </div>
 

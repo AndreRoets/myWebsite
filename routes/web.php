@@ -67,6 +67,7 @@ Route::middleware('auth')->group(function () {
 
     // Saved Searches Routes
     Route::post('/saved-searches', [App\Http\Controllers\SavedSearchController::class, 'store'])->name('saved-searches.store');
+    Route::put('/saved-searches/{savedSearch}', [App\Http\Controllers\SavedSearchController::class, 'update'])->name('saved-searches.update');
     Route::get('/saved-searches/{savedSearch}/execute', [App\Http\Controllers\SavedSearchController::class, 'execute'])->name('saved-searches.execute');
     Route::delete('/saved-searches/{savedSearch}', [App\Http\Controllers\SavedSearchController::class, 'destroy'])->name('saved-searches.destroy');
 });
