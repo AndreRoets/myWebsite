@@ -1,0 +1,428 @@
+/* ======================================================================================
+   LUXURY PROFILE PAGE — MATCHED TO HOMEPAGE THEME
+   Gold borders, glowing frames, square panels, luxurious spacing
+====================================================================================== */
+
+:root {
+    --dark-blue: #161a29;
+    --navy-blue: #1b202e;
+    --navy-hover: #242b3d;
+    --navy-border: #2f3547;
+
+    --gold-accent: #c0a87f;
+    --light-gold: #e2cfa7;
+
+    --text-light: #e0e0e0;
+    --text-muted: #a0a0a0;
+}
+
+/* ============================================================
+   PAGE STRUCTURE
+============================================================ */
+
+.profile-page {
+    padding: 3rem 0 5rem;
+    color: var(--text-light);
+}
+
+/* Title */
+.profile-page .page-title {
+    font-family: "Playfair Display", serif;
+    font-size: 3rem;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    color: var(--light-gold);
+    text-shadow: 0 0 12px rgba(192,168,127,0.4);
+}
+
+.profile-page .page-subtitle {
+    text-align: center;
+    font-size: 1.15rem;
+    color: var(--text-muted);
+    margin-bottom: 3rem;
+}
+
+/* Layout */
+.profile-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 3rem;
+}
+
+/* ============================================================
+   GOLD SHIMMER BORDER (GLOBAL UTILITY)
+============================================================ */
+
+.lux-box {
+    background: var(--navy-blue);
+    border: 1px solid var(--navy-border);
+    position: relative;
+    padding: 2rem;
+    overflow: hidden;
+    clip-path: polygon(0% 4%, 100% 0%, 100% 96%, 0% 100%);
+}
+
+/* Animated luxury border */
+.lux-box::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 3px;
+    clip-path: inherit;
+    background: linear-gradient(
+        120deg,
+        transparent 20%,
+        var(--light-gold) 35%,
+        var(--gold-accent) 50%,
+        var(--light-gold) 65%,
+        transparent 80%
+    );
+    background-size: 200% 100%;
+    background-position: var(--phase, -200%) 0;
+
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0.6;
+    animation: profileShimmer 3s linear infinite;
+}
+
+@keyframes profileShimmer {
+    0% { --phase: -200%; }
+    100% { --phase: 200%; }
+}
+
+/* ============================================================
+   SIDEBAR — USER DETAILS
+============================================================ */
+
+.user-details-card {
+    composes: lux-box;
+    text-align: center;
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+    box-shadow: 0 12px 20px rgba(0,0,0,0.45),
+                0 0 15px rgba(192,168,127,0.25);
+}
+
+.user-avatar {
+    width: 130px;
+    height: 130px;
+    margin: 0 auto 1.2rem;
+    border-radius: 6px;
+    background: var(--navy-hover);
+    border: 3px solid var(--gold-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-avatar .initials {
+    font-size: 3.1rem;
+    font-weight: 700;
+    color: var(--gold-accent);
+}
+
+.user-name {
+    font-family: "Playfair Display", serif;
+    font-size: 1.9rem;
+    color: var(--light-gold);
+    margin-bottom: 0.2rem;
+    text-shadow: 0 0 8px rgba(192,168,127,0.4);
+}
+
+.user-email {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    margin-bottom: 1.8rem;
+}
+
+/* Status badges */
+.user-status {
+    display: inline-block;
+    padding: 0.3rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid;
+    letter-spacing: 0.05em;
+}
+
+.user-status.is-approved {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    border-color: #28a745;
+}
+
+.user-status.is-pending {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+    border-color: #ffc107;
+}
+
+/* Profile action buttons */
+.profile-actions {
+    margin-top: 2.5rem;
+    padding: 0 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.btn-profile {
+    background: transparent;
+    border: 1px solid var(--navy-border);
+    color: var(--text-muted);
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-profile:hover {
+    background-color: var(--navy-hover);
+    border-color: var(--gold-accent);
+    color: var(--light-gold);
+}
+
+/* Special style for logout button */
+.btn-profile-logout:hover {
+    border-color: #d9534f; /* A soft red */
+    background-color: rgba(217, 83, 79, 0.1);
+    color: #d9534f;
+}
+
+/* ============================================================
+   MAIN CONTENT — RIGHT SIDE
+============================================================ */
+
+.profile-main-content {
+    composes: lux-box;
+    box-shadow: 0 12px 25px rgba(0,0,0,0.45),
+                0 0 18px rgba(192,168,127,0.25);
+}
+
+.content-section {
+    background: var(--navy-hover);
+    border: 1px solid var(--navy-border);
+    padding: 1.8rem;
+    position: relative;
+}
+
+/* Section headers */
+.section-header {
+    border-bottom: 1px solid var(--navy-border);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.section-header i {
+    color: var(--gold-accent);
+}
+
+.section-header h2 {
+    font-family: "Playfair Display", serif;
+    font-size: 1.75rem;
+    color: var(--light-gold);
+}
+
+/* "New Search" button in the header */
+.section-header a {
+    color: var(--text-light);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.section-header a:hover {
+    color: var(--light-gold);
+}
+/* ============================================================
+   SAVED SEARCHES (NOW LUXURY PANELS)
+============================================================ */
+
+.saved-searches-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.saved-search-item {
+    background: var(--navy-blue);
+    padding: 1.3rem 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-left: 4px solid var(--navy-border);
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(192,168,127,0.15);
+}
+
+.saved-search-item:hover {
+    background: var(--navy-hover);
+    border-left-color: var(--gold-accent);
+    box-shadow: 0 0 15px rgba(192,168,127,0.35),
+                0 6px 20px rgba(0,0,0,0.5);
+}
+
+.saved-search-item .search-name {
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: var(--light-gold);
+}
+
+.saved-search-item .search-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-left: auto; /* Pushes actions to the right */
+}
+
+.saved-search-item .search-actions a {
+    color: var(--text-light);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+}
+
+.saved-search-item .search-actions a:hover {
+    color: var(--light-gold);
+    text-decoration: none;
+}
+
+/* Delete button for a saved search - now targeting a button element */
+.saved-search-item .search-actions .btn-delete-search {
+    border: none;
+    cursor: pointer;
+    background-color: #c82333; /* A strong red */
+    color: var(--text-light);
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    transition: transform 0.2s ease-in-out, background-color 0.2s ease;
+}
+
+.saved-search-item .search-actions .btn-delete-search:hover {
+    background-color: #e0293d; /* A slightly brighter red on hover */
+    transform: scale(1.1);
+    color: var(--text-light); /* Keep text white on hover */
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2.2rem;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+/* ============================================================
+   EDIT INFO MODAL
+============================================================ */
+
+.modal-backdrop {
+    display: none; /* Hidden by default */
+    position: fixed;
+    inset: 0;
+    background-color: rgba(10, 12, 20, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.modal-content {
+    composes: lux-box;
+    width: 100%;
+    max-width: 600px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.6),
+                0 0 25px rgba(192,168,127,0.3);
+    animation: modalFadeIn 0.4s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    composes: section-header;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.3s ease;
+    padding: 0;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: var(--light-gold);
+}
+
+.modal-body {
+    padding-top: 0.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.6rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    background: var(--dark-blue);
+    border: 1px solid var(--navy-border);
+    color: var(--text-light);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--gold-accent);
+    box-shadow: 0 0 8px rgba(192,168,127,0.5);
+}
+
+.modal-footer {
+    margin-top: 2rem;
+    text-align: right;
+}

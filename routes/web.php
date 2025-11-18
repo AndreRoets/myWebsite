@@ -64,6 +64,7 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout')->middl
 Route::middleware('auth')->group(function () {
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     // Saved Searches Routes
     Route::post('/saved-searches', [App\Http\Controllers\SavedSearchController::class, 'store'])->name('saved-searches.store');

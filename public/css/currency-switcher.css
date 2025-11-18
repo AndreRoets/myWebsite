@@ -1,0 +1,49 @@
+/* ======================================================================================
+   LUXURY CURRENCY SWITCHER
+   Matches the gold and navy theme of the website.
+====================================================================================== */
+
+.currency-switcher {
+    position: relative;
+    display: inline-block;
+}
+
+/* Visually hidden label for accessibility */
+.currency-switcher .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.currency-select-dropdown {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+
+    background-color: var(--navy-blue, #1b202e);
+    border: 1px solid var(--navy-border, #2f3547);
+    color: var(--text-light, #e0e0e0);
+    padding: 0.5rem 2rem 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+}
+
+.currency-select-dropdown:hover {
+    border-color: var(--gold-accent, #c0a87f);
+    color: var(--light-gold, #e2cfa7);
+}
+
+.currency-select-dropdown:focus {
+    outline: none;
+    border-color: var(--gold-accent, #c0a87f);
+    box-shadow: 0 0 8px rgba(192, 168, 127, 0.5);
+}

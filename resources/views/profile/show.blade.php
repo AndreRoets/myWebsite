@@ -2,224 +2,187 @@
 
 @section('title', 'My Profile')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/profile.css') }}">
+@endpush
+
 @section('content')
-<div class="container" style="padding-top: 2rem; padding-bottom: 2rem;">
-    <div class="profile-card">
-        <h1>My Profile</h1>
-        <p><strong>Name:</strong> {{ $user->name }}</p>
-        <p><strong>Email:</strong> {{ $user->email }}</p>
-        <p><strong>Joined:</strong> {{ $user->created_at->format('F j, Y') }}</p>
+<div class="container profile-page">
 
-        <div class="profile-actions">
-            {{-- <a href="#" class="btn">Edit Profile</a> --}}
-            <a href="{{ route('logout') }}" class="btn btn-logout" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                @csrf
-            </form>
+    @if (session('status'))
+        <div class="alert alert-success" style="background-color: #d4edda; color: #155724; padding: .75rem 1.25rem; margin-bottom: 1rem; border: 1px solid #c3e6cb; border-radius: .25rem;">
+            {{ session('status') }}
         </div>
-    </div>
+    @endif
 
-    <div class="saved-searches-section" style="margin-top: 3rem;">
-        <h2>My Saved Searches</h2>
-        <a href="{{ route('properties.search') }}" class="btn btn-primary">Advanced Property Search</a>
+    <h1 class="page-title">Your Personal Hub</h1>
+    <p class="page-subtitle">Manage your details and saved property searches.</p>
 
-        @if (session('status'))
-            <div class="alert alert-success" style="margin-top: 1rem;">
-                {{ session('status') }}
+    <div class="profile-grid">
+
+        {{-- Left Sidebar: User Details --}}
+        <aside class="user-details-card">
+            <div class="user-avatar">
+                <span class="initials">{{ strtoupper(substr($user->name, 0, 1)) }}{{ strtoupper(substr($user->surname, 0, 1)) }}</span>
             </div>
-        @endif
+            <h2 class="user-name">{{ $user->name }} {{ $user->surname }}</h2>
+            <p class="user-email">{{ $user->email }}</p>
 
-        @if ($savedSearches->isEmpty())
-            <p>You have no saved searches yet.</p>
-        @else
-            <div class="saved-searches-list">
-                @foreach ($savedSearches as $search)
-                    <div class="saved-search-item">
-                        <h3>{{ $search->name }}</h3>
-                        <div class="search-filters">
-                            <strong>Filters:</strong>
-                            @foreach($search->filters as $key => $value)
-                                @if($value)
-                                    <span class="filter-tag">{{ ucfirst(str_replace('_', ' ', $key)) }}: {{ $value }}</span>
-                                @endif
-                            @endforeach
-                        </div>
-                        <div class="search-item-actions">
-                            <a href="{{ route('saved-searches.execute', $search) }}" class="btn btn-info">Re-run</a>
-                            <form action="{{ route('saved-searches.destroy', $search) }}" method="POST" style="display:inline-block;">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger">Delete</button>
-                            </form>
-                        </div>
+            @if($user->isApproved())
+                <span class="user-status is-approved">
+                    <i data-lucide="check-circle" style="width: 14px; height: 14px; vertical-align: text-top;"></i>
+                    Approved User
+                </span>
+            @else
+                <span class="user-status is-pending">
+                    <i data-lucide="clock" style="width: 14px; height: 14px; vertical-align: text-top;"></i>
+                    Approval Pending
+                </span>
+            @endif
+
+            {{-- Profile Actions --}}
+            <div class="profile-actions" style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+
+                {{-- NEW REQUIRED BUTTON --}}
+                <button id="edit-info-btn" class="btn-profile" style="width: 100%;">
+                    <i class="fas fa-user-edit"></i>
+                    <span>Edit Personal Info</span>
+                </button>
+
+                {{-- LOGOUT BUTTON --}}
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="width: 100%; margin: 0;">
+                    @csrf
+                    <button type="submit" class="btn-profile btn-profile-logout" style="width: 100%;">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </form>
+
+            </div>
+        </aside>
+
+        {{-- Right Column --}}
+        <main class="profile-main-content">
+
+            {{-- Saved Searches Section --}}
+            <section class="content-section">
+                <div class="section-header">
+                    <div class="section-header-title">
+                        <i data-lucide="save"></i>
+                        <h2>Saved Searches</h2>
                     </div>
-                @endforeach
-            </div>
-        @endif
+                    <a href="{{ route('properties.search') }}" class="btn btn-sm btn-outline-primary">New Search</a>
+                </div>
+
+                @if($savedSearches->isNotEmpty())
+                    <ul class="saved-searches-list">
+                        @foreach($savedSearches as $search)
+                            <li class="saved-search-item">
+                                <div class="search-details">
+                                    <p class="search-name">{{ $search->name }}</p>
+                                    <small class="text-muted">Saved on {{ $search->created_at->format('M d, Y') }}</small>
+                                </div>
+                                <div class="search-actions">
+                                    <a href="{{ route('saved-searches.execute', $search) }}" class="btn btn-sm btn-outline-primary">View Results</a>
+                                    <form action="{{ route('saved-searches.destroy', $search) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this saved search?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                @else
+                    <div class="empty-state">
+                        <p>You have no saved searches yet.</p>
+                        <a href="{{ route('properties.search') }}" class="btn btn-primary">Start a New Search</a>
+                    </div>
+                @endif
+            </section>
+
+        </main>
     </div>
 </div>
 
-<style>
-.profile-card {
-    background: #fff;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    max-width: 600px;
-    margin: 2rem auto;
-}
-.profile-card h1 {
-    margin-top: 0;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 1rem;
-    margin-bottom: 1rem;
-}
-.profile-actions {
-    margin-top: 1.5rem;
-    text-align: right;
-}
-.btn {
-    display: inline-block;
-    padding: 0.75rem 1.5rem;
-    border-radius: 4px;
-    text-decoration: none;
-    font-weight: 600;
-    transition: background-color 0.3s;
-    cursor: pointer;
-}
-.btn-logout {
-    background-color: #e53e3e; /* A red color for logout */
-    color: #fff;
-}
-.btn-logout:hover {
-    background-color: #c53030;
-}
-.btn-primary {
-    background-color: #007bff;
-    color: #fff;
-}
-.btn-primary:hover {
-    background-color: #0056b3;
-}
-.btn-info {
-    background-color: #17a2b8;
-    color: #fff;
-}
-.btn-info:hover {
-    background-color: #117a8b;
-}
-.btn-warning {
-    background-color: #ffc107;
-    color: #212529;
-}
-.btn-warning:hover {
-    background-color: #e0a800;
-}
-.btn-danger {
-    background-color: #dc3545;
-    color: #fff;
-}
-.btn-danger:hover {
-    background-color: #bd2130;
-}
-.btn-success {
-    background-color: #28a745;
-    color: #fff;
-}
-.btn-success:hover {
-    background-color: #218838;
-}
-.alert.alert-success {
-    background-color: #d4edda;
-    color: #155724;
-    padding: .75rem 1.25rem;
-    border: 1px solid #c3e6cb;
-    border-radius: .25rem;
-}
+{{-- NEW CUSTOM MODAL YOU ASKED TO ADD --}}
+<div id="edit-info-modal" class="modal-backdrop" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-address-card"></i> Edit Personal Information</h2>
+            <button class="modal-close" aria-label="Close">&times;</button>
+        </div>
 
-.saved-searches-section {
-    background: #fff;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    max-width: 900px;
-    margin: 2rem auto;
-}
-.saved-searches-section h2 {
-    margin-top: 0;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 1rem;
-    margin-bottom: 1rem;
-}
-.saved-search-item {
-    border: 1px solid #eee;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: 5px;
-}
-.saved-search-item h3 {
-    margin-top: 0;
-    margin-bottom: 0.5rem;
-}
-.search-filters {
-    margin-bottom: 1rem;
-    color: #666;
-}
-.filter-tag {
-    display: inline-block;
-    background-color: #e9ecef;
-    color: #495057;
-    padding: 0.25rem 0.6rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    margin-right: 0.5rem;
-    margin-top: 0.25rem;
-}
+        <div class="modal-body">
+            <form action="{{ route('profile.update') }}" method="POST">
+                @csrf
+                @method('PATCH')
 
-.search-item-actions button, .search-item-actions a {
-    margin-right: 0.5rem;
-}
+                <div class="form-group">
+                    <label for="modal_name">Name</label>
+                    <input type="text" id="modal_name" name="name" class="form-control" value="{{ auth()->user()->name }}">
+                    @error('name')
+                        <div class="text-danger" style="font-size: 0.875em; margin-top: 0.25rem;">{{ $message }}</div>
+                    @enderror
+                </div>
 
-/* Modal Styles */
-.modal {
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.modal-content {
-    background-color: #fefefe;
-    margin: auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
-    max-width: 800px;
-    border-radius: 8px;
-    position: relative;
-}
-.close-button {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    position: absolute;
-    right: 20px;
-    top: 10px;
-}
-.close-button:hover,
-.close-button:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
-}
-</style>
+                <div class="form-group">
+                    <label for="modal_surname">Surname</label>
+                    <input type="text" id="modal_surname" name="surname" class="form-control" value="{{ auth()->user()->surname }}">
+                    @error('surname')
+                        <div class="text-danger" style="font-size: 0.875em; margin-top: 0.25rem;">{{ $message }}</div>
+                    @enderror
+                </div>
 
+                <div class="modal-footer">
+                    <button type="submit" class="btn-profile" style="border-color: var(--gold-accent); color: var(--light-gold);">
+                        <i class="fas fa-save"></i>
+                        <span>Save Changes</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 @endsection
+
+@push('scripts')
+<script src="{{ asset('js/profile-actions.js') }}"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+    lucide.createIcons();
+
+    // Custom modal toggle script
+    const editBtn = document.getElementById('edit-info-btn');
+    const customModal = document.getElementById('edit-info-modal');
+    const closeModal = customModal.querySelector('.modal-close');
+
+    @if($errors->any())
+        // If there are validation errors, show the modal on page load.
+        customModal.style.display = 'flex';
+    @endif
+
+    editBtn.addEventListener('click', () => {
+        customModal.style.display = 'flex';
+    });
+
+    closeModal.addEventListener('click', () => {
+        customModal.style.display = 'none';
+    });
+
+    document.addEventListener('click', e => {
+        if (e.target === customModal) customModal.style.display = 'none';
+    });
+
+    // URL Status Update Message
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('status') && urlParams.get('status') === 'search-updated') {
+            const alertDiv = document.querySelector('.alert');
+            if (alertDiv) {
+                alertDiv.textContent = 'Search updated successfully!';
+            }
+        }
+    });
+</script>
+@endpush
