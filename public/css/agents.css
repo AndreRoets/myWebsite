@@ -80,6 +80,7 @@ body.agents-page {
     transition: transform .2s ease, box-shadow .2s ease;
     display: flex;
     flex-direction: column;
+    text-decoration: none;
 }
 
 .agent-card:hover {
@@ -139,6 +140,13 @@ body.agents-page {
 
 .agent-card__contact a:hover {
     color: var(--gold-500);
+}
+
+.agent-card__contact span {
+    display: block;
+    color: #fff;
+    font-size: 0.875rem; /* 14px */
+    margin: 0.25rem auto;
 }
 
 /* ===============================

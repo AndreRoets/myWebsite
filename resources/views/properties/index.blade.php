@@ -16,30 +16,35 @@
       </div>
   @endif
 
-  {{-- Filter Section --}}
+  {{-- Dynamic Filter Section --}}
   <form method="GET" class="filters" action="{{ route('properties.index') }}">
-    <select name="type" aria-label="Property Type">
-      <option value="">All types</option>
-      @foreach (['house','apartment','townhouse','vacant_land','commercial'] as $t)
-        <option value="{{ $t }}" @selected(request('type')===$t)>
-          {{ ucfirst(str_replace('_', ' ', $t)) }}
-        </option>
-      @endforeach
-    </select>
-
-    <select name="beds" aria-label="Minimum Beds">
-      <option value="">Any beds</option>
-      @for($i=1;$i<=6;$i++)
-        <option value="{{ $i }}" @selected(request('beds')==$i)>{{ $i }}+</option>
-      @endfor
-    </select>
-
-    <input type="number" name="min" placeholder="Min price" value="{{ request('min') }}">
-    <input type="number" name="max" placeholder="Max price" value="{{ request('max') }}">
+    @foreach ($filters as $filter)
+      @switch($filter['type'])
+        @case('select')
+          <select name="{{ $filter['name'] }}" aria-label="{{ $filter['label'] }}">
+            <option value="">{{ $filter['label'] }}</option>
+            @foreach ($filter['options'] as $option)
+              <option value="{{ $option }}" @selected(request($filter['name']) == $option)>
+                {{ is_numeric($option) ? $option . ($filter['name'] === 'bedrooms' ? '+' : '') : ucfirst($option) }}
+              </option>
+            @endforeach
+          </select>
+          @break
+        @default
+          <input 
+            type="{{ $filter['type'] }}" 
+            name="{{ $filter['name'] }}" 
+            placeholder="{{ $filter['label'] }}" 
+            value="{{ request($filter['name']) }}"
+            aria-label="{{ $filter['label'] }}"
+          >
+          @break
+      @endswitch
+    @endforeach
 
     <button class="hero-btn" type="submit">Filter</button>
 
-    @if(request()->hasAny(['type','beds','min','max']) && (request('type')||request('beds')||request('min')||request('max')))
+    @if(request()->hasAny(array_column($filters, 'name')))
       <a class="clear-link" href="{{ route('properties.index') }}">Clear</a>
     @endif
   </form>

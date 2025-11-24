@@ -164,7 +164,6 @@
                     <nav>
                         <ul class="nav-links">
                             <li><a href="{{ route('properties.index') }}" class="{{ request()->routeIs('properties.*') ? 'active' : '' }}">Properties</a></li>
-                            <li><a href="#">Services</a></li>
                             <li><a href="{{ route('agents.index') }}" class="{{ request()->routeIs('agents.*') ? 'active' : '' }}">Agents</a></li>
                             <li><a href="{{ route('contact') }}" class="{{ request()->routeIs('contact') ? 'active' : '' }}">Contact</a></li>
                             @guest
@@ -191,7 +190,6 @@
                 <nav>
                     <ul class="nav-links">
                         <li><a href="{{ route('properties.index') }}" class="{{ request()->routeIs('properties.*') ? 'active' : '' }}">Properties</a></li>
-                        <li><a href="#">Services</a></li>
                         <li><a href="{{ route('agents.index') }}" class="{{ request()->routeIs('agents.*') ? 'active' : '' }}">Agents</a></li>
                         <li><a href="{{ route('contact') }}" class="{{ request()->routeIs('contact') ? 'active' : '' }}">Contact</a></li>
                         @guest
