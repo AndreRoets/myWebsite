@@ -46,7 +46,7 @@
       .hero-contact__media{
         position: relative;
         height: clamp(280px, 42vw, 380px);
-        background: url("/Image/Hero.webp") center/cover no-repeat;
+        background: url("{{ asset('Image/Hero.webp') }}") center/cover no-repeat;
         filter: saturate(0.95);
       }
       

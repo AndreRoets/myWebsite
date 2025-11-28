@@ -62,7 +62,7 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout')->middl
 
 // Authenticated user routes
 Route::middleware('auth')->group(function () {
-    Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+    // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home'); // Removed to avoid naming conflict with root '/' route
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
 

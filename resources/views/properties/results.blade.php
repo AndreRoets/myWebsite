@@ -2,6 +2,10 @@
 
 @section('title', 'Property Search Results')
 
+@push('styles')
+  <link rel="stylesheet" href="{{ asset('css/propertypage.css') }}">
+@endpush
+
 @section('content')
 <div class="container" style="padding-top: 2rem; padding-bottom: 2rem;">
     <h1>Property Search Results</h1>
@@ -63,27 +67,76 @@
         @if ($properties->isEmpty())
             <p>No properties found matching your criteria.</p>
         @else
-            <div class="property-listings">
-                @foreach ($properties as $property)
-                    <div class="property-card">
-                        <a href="{{ route('properties.show', $property->slug) }}">
-                            <img src="{{ $property->image_url ?? asset('images/property-placeholder.png') }}" alt="{{ $property->title }}">
-                            <div class="property-card-body">
-                                <h3>{{ $property->title }}</h3>
-                                <p class="price">${{ number_format($property->price) }}</p>
-                                <p class="location">{{ $property->location }}</p>
-                                <div class="features">
-                                    <span><i class="fas fa-bed"></i> {{ $property->bedrooms }}</span>
-                                    <span><i class="fas fa-bath"></i> {{ $property->bathrooms }}</span>
+            <div class="properties-grid">
+                @foreach ($properties as $p)
+                    @php
+                        // A property is visually restricted if:
+                        // 1. It's not visible AND the user is a guest or not approved.
+                        // 2. It's exclusive AND the user is a guest.
+                        $isVisuallyRestricted = (!$p->is_visible && (!auth()->check() || !auth()->user()->isApproved()))
+                                                || ($p->is_exclusive && !auth()->check());
+                        $isClickable = !$isVisuallyRestricted;
+                    @endphp
+
+                    @if($isClickable)
+                        <a href="{{ route('properties.show', $p) }}" class="property-card-link">
+                    @endif
+                    <div class="property-card @if($isVisuallyRestricted) is-restricted @endif" style="position: relative;">
+                        <div class="property-image"
+                             style="background-image:url('{{ $p->hero_image ? asset('storage/' . $p->hero_image) : asset('Image/category1.webp') }}');
+                                    {{ $isVisuallyRestricted ? 'filter: blur(12px); transform: scale(1.1);' : '' }}">
+                        </div>
+                        <div class="property-card-content">
+                            <h3>{{ $p->title ?? 'Untitled Property' }}</h3>
+
+                            @if(!is_null($p->price))
+                                <p class="price">R {{ number_format($p->price, 0, ',', ' ') }}</p>
+                            @endif
+
+                            <p>
+                                <strong>Beds:</strong> {{ $p->bedrooms ?? '—' }}
+                                &nbsp;•&nbsp;
+                                <strong>Baths:</strong> {{ $p->bathrooms ?? '—' }}
+                            </p>
+
+                            <p>
+                                <strong>Location:</strong>
+                                {{ trim(($p->suburb ?? '').($p->suburb && $p->city ? ', ' : '').($p->city ?? '—')) }}
+                            </p>
+
+                            @if($isVisuallyRestricted)
+                                <div class="restricted-cta" style="margin-top: 1rem; text-align: center;">
+                                    @php
+                                        $needsApproval = !$p->is_visible && (!auth()->check() || !auth()->user()->isApproved());
+                                        $needsLogin = $p->is_exclusive && !auth()->check();
+                                    @endphp
+
+                                    @if ($needsApproval && $needsLogin)
+                                        <span class="btn" style="background-color: #6c757d; cursor: not-allowed;">Login as an approved user to view.</span>
+                                    @elseif ($needsApproval)
+                                        <span class="btn" style="background-color: #6c757d; cursor: not-allowed;">Only approved users can view this property.</span>
+                                    @elseif ($needsLogin)
+                                        <span class="btn" style="background-color: #6c757d; cursor: not-allowed;">Login to view this property.</span>
+                                    @else
+                                        <span class="btn" style="background-color: #6c757d; cursor: not-allowed;">Details Restricted</span>
+                                    @endif
                                 </div>
-                            </div>
-                        </a>
+                            @else
+                                @if(!empty($p->floor_size))
+                                    <p><strong>Size:</strong> {{ $p->floor_size }} m²</p>
+                                @endif
+                                <span class="btn">View Details</span>
+                            @endif
+                        </div>
                     </div>
+                    @if($isClickable)
+                        </a>
+                    @endif
                 @endforeach
             </div>
 
-            <div class="pagination-container">
-                {{ $properties->links() }}
+            <div class="pagination" style="margin-top:2rem;">
+                {{ $properties->onEachSide(1)->links() }}
             </div>
         @endif
     </div>
@@ -120,54 +173,6 @@
 </div>
 
 <style>
-.property-listings {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
-}
-.property-card {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    overflow: hidden;
-    transition: transform 0.2s;
-}
-.property-card:hover {
-    transform: translateY(-5px);
-}
-.property-card a {
-    text-decoration: none;
-    color: inherit;
-}
-.property-card img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-}
-.property-card-body {
-    padding: 1rem;
-}
-.property-card-body h3 {
-    margin-top: 0;
-    font-size: 1.25rem;
-}
-.price {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #007bff;
-}
-.location {
-    color: #6c757d;
-}
-.features {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 1rem;
-}
-.pagination-container {
-    margin-top: 2rem;
-}
-
 /* Save Search Modal Styles */
 .save-search-modal {
     position: fixed;

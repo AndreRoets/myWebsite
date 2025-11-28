@@ -3,9 +3,11 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\SavedSearch;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -17,10 +19,12 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-          
-        'name', 'surname',
+        'name',
+        'surname',
         'email',
         'password',
+        'is_admin',
+        'is_approved',
     ];
 
     /**
@@ -34,44 +38,24 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_admin' => 'boolean',
-            'is_approved' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'is_admin' => 'boolean',
+        'is_approved' => 'boolean',
+    ];
 
-    /**
-     * Check if the user is an administrator.
-     *
-     * @return bool
-     */
-    public function isAdmin(): bool
-    {
-        return $this->is_admin;
-    }
-
-    /**
-     * Check if the user is approved.
-     *
-     * @return bool
-     */
-    public function isApproved(): bool
-    {
-        return $this->is_approved;
-    }
+    public function isApproved() { return $this->is_approved; }
+    public function isAdmin() { return $this->is_admin; }
 
     /**
      * Get the saved searches for the user.
      */
-    public function savedSearches()
+    public function savedSearches(): HasMany
     {
         return $this->hasMany(SavedSearch::class);
     }

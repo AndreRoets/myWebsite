@@ -39,15 +39,11 @@ class UserAdminController extends Controller
         $validatedData = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'is_admin' => ['required', 'boolean'],
+            'is_approved' => ['required', 'boolean'],
         ]);
 
-        // Start with validated data for name and email
-        $validated = $validatedData;
-        // Handle checkboxes for both is_admin and is_approved
-        $validated['is_admin'] = $request->has('is_admin');
-        $validated['is_approved'] = $request->has('is_approved');
-
-        $user->update($validated);
+        $user->update($validatedData);
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User updated successfully.');
