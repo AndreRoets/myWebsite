@@ -29,10 +29,6 @@ Route::post('/properties/{property}/toggle-display', [PropertyController::class,
 
 Route::get('/contact', fn() => view('contact'))->name('contact');
  
-// Temporary debug route to check php.ini settings
-Route::get('/php-info', function () {
-    phpinfo();
-})->name('php.info');
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/', fn() => redirect()->route('admin.dashboard'));

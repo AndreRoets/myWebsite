@@ -9,6 +9,17 @@
         <div class="form-group">
             <label for="name">Name</label>
             <input id="name" type="text" name="name" value="{{ old('name') }}" required autofocus>
+            @error('name')
+                <span class="error-message">{{ $message }}</span>
+            @enderror
+        </div>
+
+        <div class="form-group">
+            <label for="surname">Surname</label>
+            <input id="surname" type="text" name="surname" value="{{ old('surname') }}" required>
+            @error('surname')
+                <span class="error-message">{{ $message }}</span>
+            @enderror
         </div>
 
         <div class="form-group">

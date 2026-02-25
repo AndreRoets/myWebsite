@@ -167,6 +167,18 @@ class PropertyController extends Controller
     }
 
     /**
+     * Toggle the is_visible flag on a property.
+     */
+    public function toggleDisplay(Property $property)
+    {
+        $property->is_visible = !$property->is_visible;
+        $property->save();
+
+        $status = $property->is_visible ? 'visible' : 'hidden';
+        return back()->with('status', "Property is now {$status}.");
+    }
+
+    /**
      * Get all the options for the property search filters.
      *
      * @return \Illuminate\Http\JsonResponse
