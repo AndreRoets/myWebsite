@@ -81,4 +81,13 @@ class Property extends Model
             get: fn () => array_values($this->images()->where('time_of_day', 'general')->pluck('path')->all())
         );
     }
+
+    /**
+     * Canonical URL for the property detail page.
+     * Allows Property and Listing to be used interchangeably in views.
+     */
+    public function getShowUrlAttribute(): string
+    {
+        return route('properties.show', $this);
+    }
 }

@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Agent;
+use App\Models\Listing;
 use App\Models\Property;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class PropertyController extends Controller
@@ -14,74 +16,79 @@ class PropertyController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Property::query()->with('agent', 'images'); // Eager load relationships
+        // --- Nexus listings (primary source) ---
+        $listingQuery = Listing::active();
 
-        // Apply filters based on request parameters from the new search form
-        $query->when($request->filled('title'), function ($q) use ($request) {
-            $q->where('title', 'like', '%' . $request->title . '%');
-        });
+        $listingQuery->when($request->filled('title'),
+            fn($q) => $q->where('title', 'like', '%' . $request->title . '%'));
+        $listingQuery->when($request->filled('min_price'),
+            fn($q) => $q->where('price', '>=', $request->min_price));
+        $listingQuery->when($request->filled('max_price'),
+            fn($q) => $q->where('price', '<=', $request->max_price));
+        $listingQuery->when($request->filled('suburb'),
+            fn($q) => $q->where('suburb', 'like', '%' . $request->suburb . '%'));
+        $listingQuery->when($request->filled('bedrooms'),
+            fn($q) => $q->where('beds', '>=', $request->bedrooms));
+        $listingQuery->when($request->filled('bathrooms'),
+            fn($q) => $q->where('baths', '>=', $request->bathrooms));
+        // Map the status filter to mandate_type on listings (e.g. 'for_sale', 'for_rent')
+        $listingQuery->when($request->filled('status'),
+            fn($q) => $q->where('mandate_type', $request->status));
+        $listingQuery->when($request->filled('type'),
+            fn($q) => $q->where('property_type', $request->type));
 
-        $query->when($request->filled('agent_id'), function ($q) use ($request) {
-            $q->where('agent_id', $request->agent_id);
-        });
+        $allListings = $listingQuery->latest('synced_at')->get();
 
-        $query->when($request->filled('min_price'), function ($q) use ($request) {
-            $q->where('price', '>=', $request->min_price);
-        });
+        // --- Manually managed properties ---
+        $query = Property::query()->with('agent', 'images');
 
-        $query->when($request->filled('max_price'), function ($q) use ($request) {
-            $q->where('price', '<=', $request->max_price);
-        });
+        $query->when($request->filled('title'),
+            fn($q) => $q->where('title', 'like', '%' . $request->title . '%'));
+        $query->when($request->filled('agent_id'),
+            fn($q) => $q->where('agent_id', $request->agent_id));
+        $query->when($request->filled('min_price'),
+            fn($q) => $q->where('price', '>=', $request->min_price));
+        $query->when($request->filled('max_price'),
+            fn($q) => $q->where('price', '<=', $request->max_price));
+        $query->when($request->filled('status'),
+            fn($q) => $q->where('status', $request->status));
+        $query->when($request->filled('type'),
+            fn($q) => $q->where('type', $request->type));
+        $query->when($request->filled('special_type'),
+            fn($q) => $q->where('special_type', $request->special_type));
+        $query->when($request->filled('city'),
+            fn($q) => $q->where('city', $request->city));
+        $query->when($request->filled('suburb'),
+            fn($q) => $q->where('suburb', $request->suburb));
+        $query->when($request->filled('bedrooms'),
+            fn($q) => $q->where('bedrooms', '>=', $request->bedrooms));
+        $query->when($request->filled('bathrooms'),
+            fn($q) => $q->where('bathrooms', '>=', $request->bathrooms));
+        $query->when($request->filled('garages'),
+            fn($q) => $q->where('garages', '>=', $request->garages));
+        $query->when($request->filled('min_floor_size'),
+            fn($q) => $q->where('floor_size', '>=', $request->min_floor_size));
+        $query->when($request->filled('max_floor_size'),
+            fn($q) => $q->where('floor_size', '<=', $request->max_floor_size));
+        $query->when($request->filled('min_erf_size'),
+            fn($q) => $q->where('erf_size', '>=', $request->min_erf_size));
+        $query->when($request->filled('max_erf_size'),
+            fn($q) => $q->where('erf_size', '<=', $request->max_erf_size));
 
-        $query->when($request->filled('status'), function ($q) use ($request) {
-            $q->where('status', $request->status);
-        });
+        $allProperties = $query->latest()->get();
 
-        $query->when($request->filled('type'), function ($q) use ($request) {
-            $q->where('type', $request->type);
-        });
+        // --- Merge: Nexus listings first, then manually managed properties ---
+        $merged = $allListings->concat($allProperties);
 
-        $query->when($request->filled('special_type'), function ($q) use ($request) {
-            $q->where('special_type', $request->special_type);
-        });
-
-        $query->when($request->filled('city'), function ($q) use ($request) {
-            $q->where('city', $request->city);
-        });
-
-        $query->when($request->filled('suburb'), function ($q) use ($request) {
-            $q->where('suburb', $request->suburb);
-        });
-
-        $query->when($request->filled('bedrooms'), function ($q) use ($request) {
-            $q->where('bedrooms', '>=', $request->bedrooms);
-        });
-
-        $query->when($request->filled('bathrooms'), function ($q) use ($request) {
-            $q->where('bathrooms', '>=', $request->bathrooms);
-        });
-
-        $query->when($request->filled('garages'), function ($q) use ($request) {
-            $q->where('garages', '>=', $request->garages);
-        });
-
-        $query->when($request->filled('min_floor_size'), function ($q) use ($request) {
-            $q->where('floor_size', '>=', $request->min_floor_size);
-        });
-
-        $query->when($request->filled('max_floor_size'), function ($q) use ($request) {
-            $q->where('floor_size', '<=', $request->max_floor_size);
-        });
-
-        $query->when($request->filled('min_erf_size'), function ($q) use ($request) {
-            $q->where('erf_size', '>=', $request->min_erf_size);
-        });
-
-        $query->when($request->filled('max_erf_size'), function ($q) use ($request) {
-            $q->where('erf_size', '<=', $request->max_erf_size);
-        });
-
-        $properties = $query->latest()->paginate(12)->withQueryString();
+        $perPage  = 12;
+        $page     = LengthAwarePaginator::resolveCurrentPage();
+        $properties = new LengthAwarePaginator(
+            $merged->forPage($page, $perPage)->values(),
+            $merged->count(),
+            $perPage,
+            $page,
+            ['path' => LengthAwarePaginator::resolveCurrentPath(), 'query' => $request->query()]
+        );
 
         // Define the filters for the view to render the form dynamically.
         $filters = [

@@ -56,4 +56,39 @@ class Listing extends Model
     {
         return $query->where('suburb', $suburb);
     }
+
+    // -------------------------------------------------------------------------
+    // Normalized accessors — allow Listing instances to be used in views and
+    // templates designed for the Property model (e.g. the property index card).
+    // -------------------------------------------------------------------------
+
+    public function getBedroomsAttribute(): int   { return $this->beds  ?? 0; }
+    public function getBathroomsAttribute(): int  { return $this->baths ?? 0; }
+    public function getCityAttribute(): ?string   { return $this->region; }
+    public function getFloorSizeAttribute(): ?int { return $this->size_m2; }
+    public function getIsVisibleAttribute(): bool  { return true; }
+    public function getIsExclusiveAttribute(): bool { return false; }
+    public function getTypeAttribute(): ?string   { return $this->property_type; }
+
+    /**
+     * Return the first image as a full URL (Nexus sends absolute URLs).
+     * Returns null when no images are present.
+     */
+    public function getHeroImageAttribute(): ?string
+    {
+        $images = $this->images_json;
+        if (empty($images) || !is_array($images)) {
+            return null;
+        }
+        $first = $images[0] ?? null;
+        return is_string($first) ? $first : ($first['url'] ?? $first['path'] ?? null);
+    }
+
+    /**
+     * Canonical URL for the listing detail page.
+     */
+    public function getShowUrlAttribute(): string
+    {
+        return route('listings.show', $this->external_id);
+    }
 }

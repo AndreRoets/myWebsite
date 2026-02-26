@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AgentAdminController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\ListingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\PropertyAdminController;
 
@@ -28,6 +29,8 @@ Route::post('/properties/{property}/toggle-display', [PropertyController::class,
     ->name('properties.toggleDisplay');
 
 Route::get('/contact', fn() => view('contact'))->name('contact');
+
+Route::get('/listings/{externalId}', [ListingController::class, 'show'])->name('listings.show');
  
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
