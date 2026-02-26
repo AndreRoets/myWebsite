@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'nexus' => [
+        'sync_token' => env('NEXUS_SYNC_TOKEN'),
+    ],
+
 ];

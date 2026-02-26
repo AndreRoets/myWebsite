@@ -9,7 +9,7 @@ class ValidateSyncToken
 {
     public function handle(Request $request, Closure $next)
     {
-        $expected = env('NEXUS_SYNC_TOKEN');
+        $expected = config('services.nexus.sync_token');
         $header   = $request->header('Authorization', '');
 
         if (!$expected || !str_starts_with($header, 'Bearer ')) {
