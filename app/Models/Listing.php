@@ -15,9 +15,11 @@ class Listing extends Model
         'external_id',
         'title',
         'description',
+        'excerpt',
         'price',
         'suburb',
         'region',
+        'city',
         'beds',
         'baths',
         'garages',
@@ -29,16 +31,24 @@ class Listing extends Model
         'images_json',
         'agent_json',
         'agency_json',
+        'dawn_images',
+        'noon_images',
+        'dusk_images',
+        'gallery_images',
         'published_at',
         'synced_at',
     ];
 
     protected $casts = [
-        'images_json' => 'array',
-        'agent_json'  => 'array',
-        'agency_json' => 'array',
-        'published_at' => 'datetime',
-        'synced_at'    => 'datetime',
+        'images_json'   => 'array',
+        'agent_json'    => 'array',
+        'agency_json'   => 'array',
+        'dawn_images'   => 'array',
+        'noon_images'   => 'array',
+        'dusk_images'   => 'array',
+        'gallery_images' => 'array',
+        'published_at'  => 'datetime',
+        'synced_at'     => 'datetime',
     ];
 
     /**
@@ -64,24 +74,30 @@ class Listing extends Model
 
     public function getBedroomsAttribute(): int   { return $this->beds  ?? 0; }
     public function getBathroomsAttribute(): int  { return $this->baths ?? 0; }
-    public function getCityAttribute(): ?string   { return $this->region; }
+    public function getCityAttribute(): ?string   { return $this->attributes['city'] ?? $this->region; }
     public function getFloorSizeAttribute(): ?int { return $this->size_m2; }
     public function getIsVisibleAttribute(): bool  { return true; }
     public function getIsExclusiveAttribute(): bool { return false; }
     public function getTypeAttribute(): ?string   { return $this->property_type; }
 
     /**
-     * Return the first image as a full URL (Nexus sends absolute URLs).
-     * Returns null when no images are present.
+     * Return the first image URL as a hero image.
+     * Priority: dawn_images → noon_images → dusk_images → gallery_images → images_json.
+     * Nexus sends absolute URLs.
      */
     public function getHeroImageAttribute(): ?string
     {
-        $images = $this->images_json;
-        if (empty($images) || !is_array($images)) {
-            return null;
+        foreach (['dawn_images', 'noon_images', 'dusk_images', 'gallery_images', 'images_json'] as $group) {
+            $images = $this->$group;
+            if (!empty($images) && is_array($images)) {
+                $first = $images[0] ?? null;
+                $url = is_string($first) ? $first : ($first['url'] ?? $first['path'] ?? null);
+                if ($url) {
+                    return $url;
+                }
+            }
         }
-        $first = $images[0] ?? null;
-        return is_string($first) ? $first : ($first['url'] ?? $first['path'] ?? null);
+        return null;
     }
 
     /**

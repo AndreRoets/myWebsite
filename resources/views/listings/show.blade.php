@@ -4,6 +4,12 @@
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/property-show.css') }}">
+    <style>
+        .image-group { margin-bottom: 2rem; }
+        .image-group h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem; color: #555; text-transform: uppercase; letter-spacing: 0.05em; }
+        .image-group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.75rem; }
+        .image-group-grid img { width: 100%; height: 200px; object-fit: cover; border-radius: 6px; display: block; }
+    </style>
 @endpush
 
 @section('content')
@@ -12,20 +18,38 @@
     <section class="property-details-main">
 
         @php
-            $images = $listing->images_json ?? [];
-            if (!is_array($images)) $images = [];
+            $imageGroups = [
+                'Dawn'    => $listing->dawn_images    ?? [],
+                'Day'     => $listing->noon_images    ?? [],
+                'Dusk'    => $listing->dusk_images    ?? [],
+                'Gallery' => $listing->gallery_images ?? [],
+            ];
+            // Fallback: if all groups are empty, use images_json as "Gallery"
+            $anyGroup = array_filter($imageGroups, fn($g) => !empty($g));
+            if (empty($anyGroup)) {
+                $imageGroups = ['Gallery' => $listing->images_json ?? []];
+            }
+
+            // Helper to extract URL from an image entry (string or array)
+            $imgUrl = fn($img) => is_string($img) ? $img : ($img['url'] ?? $img['path'] ?? null);
         @endphp
 
-        @if(!empty($images))
+        {{-- Primary hero carousel: first non-empty group --}}
+        @php
+            $heroImages = [];
+            foreach ($imageGroups as $groupImages) {
+                if (!empty($groupImages)) { $heroImages = $groupImages; break; }
+            }
+        @endphp
+
+        @if(!empty($heroImages))
             <div class="carousel-container">
                 <div class="carousel-slides">
-                    @foreach($images as $index => $img)
-                        @php
-                            $imgUrl = is_string($img) ? $img : ($img['url'] ?? $img['path'] ?? null);
-                        @endphp
-                        @if($imgUrl)
+                    @foreach($heroImages as $index => $img)
+                        @php $url = $imgUrl($img); @endphp
+                        @if($url)
                             <div class="carousel-slide @if($index === 0) active @endif">
-                                <img src="{{ $imgUrl }}" alt="{{ $listing->title }} image {{ $index + 1 }}">
+                                <img src="{{ $url }}" alt="{{ $listing->title }} image {{ $index + 1 }}">
                             </div>
                         @endif
                     @endforeach
@@ -80,12 +104,44 @@
                 @endif
             </div>
 
+            @if($listing->excerpt)
+                <hr class="divider">
+                <div class="property-description">
+                    <p><em>{{ $listing->excerpt }}</em></p>
+                </div>
+            @endif
+
             @if($listing->description)
                 <hr class="divider">
                 <div class="property-description">
                     <p>{{ $listing->description }}</p>
                 </div>
             @endif
+
+            {{-- Additional image groups (all groups except the hero one shown above) --}}
+            @php
+                $shownFirst = false;
+            @endphp
+            @foreach($imageGroups as $label => $groupImages)
+                @if(!empty($groupImages))
+                    @if(!$shownFirst)
+                        @php $shownFirst = true; @endphp
+                        @continue
+                    @endif
+                    <hr class="divider">
+                    <div class="image-group">
+                        <h2>{{ $label }} Photos</h2>
+                        <div class="image-group-grid">
+                            @foreach($groupImages as $img)
+                                @php $url = $imgUrl($img); @endphp
+                                @if($url)
+                                    <img src="{{ $url }}" alt="{{ $label }} photo of {{ $listing->title }}">
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            @endforeach
         </div>
     </section>
 
