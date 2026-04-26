@@ -188,7 +188,6 @@ class ListingSyncController extends Controller
                         'noon_images_json'    => null,
                         'dusk_images_json'    => null,
                         'hero_image'          => null,
-                        'images'              => null,
 
                         'youtube_video_id' => $data['youtube_video_id'] ?? null,
                         'matterport_id'    => $data['matterport_id']    ?? null,
@@ -246,12 +245,15 @@ class ListingSyncController extends Controller
                 }
 
                 $bucketPaths['hero_image'] = $primaryPaths[0] ?? ($allPaths[0] ?? null);
-                $bucketPaths['images']     = !empty($allPaths) ? json_encode(array_values($allPaths)) : null;
                 $bucketPaths['display']    = 1;
                 $bucketPaths['is_visible'] = true;
 
                 try {
                     $property->update($bucketPaths);
+                    // Write legacy `images` column directly to bypass the hasMany relation collision.
+                    DB::table('properties')->where('id', $property->id)->update([
+                        'images' => !empty($allPaths) ? json_encode(array_values($allPaths)) : null,
+                    ]);
                 } catch (\Throwable $e) {
                     foreach ($writtenPaths as $p) Storage::disk('public')->delete($p);
                     throw $e;

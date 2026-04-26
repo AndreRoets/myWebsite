@@ -23,7 +23,7 @@ class Property extends Model
         'suburb_id', 'town_id', 'region_id', 'province_id',
 
         'bedrooms', 'bathrooms', 'garages', 'floor_size', 'erf_size',
-        'is_visible', 'is_exclusive', 'listed_at', 'display', 'hero_image', 'images',
+        'is_visible', 'is_exclusive', 'listed_at', 'display', 'hero_image',
         'listed_date', 'expiry_date', 'published_at', 'synced_at',
 
         'gallery_images_json', 'dawn_images_json', 'noon_images_json',
