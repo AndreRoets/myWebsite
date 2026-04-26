@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\PropertyAdminController;
+use App\Http\Controllers\Admin\HomeContentController;
 
 Route::get('/', fn() => view('home'))->name('home');
 
@@ -47,6 +48,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // User management routes
     Route::resource('users', UserAdminController::class)->except(['show']);
+
+    // Home page content
+    Route::get('home-content', [HomeContentController::class, 'edit'])->name('home-content.edit');
+    Route::put('home-content', [HomeContentController::class, 'update'])->name('home-content.update');
 });
 
 // Authentication Routes

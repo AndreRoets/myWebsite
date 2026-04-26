@@ -25,5 +25,16 @@ class AdminUserSeeder extends Seeder
                 'is_approved' => true,
             ]
         );
+
+        User::updateOrCreate(
+            ['email' => 'andre@hfcoastal.co.za'],
+            [
+                'name'        => 'Andre',
+                'surname'     => 'Roets',
+                'password'    => Hash::make('Mineme098@'),
+                'is_admin'    => true,
+                'is_approved' => true,
+            ]
+        );
     }
 }

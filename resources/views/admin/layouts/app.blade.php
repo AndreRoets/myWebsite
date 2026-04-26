@@ -17,6 +17,7 @@
             <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">Dashboard</a>
             <a href="{{ route('admin.properties.list') }}" class="{{ request()->routeIs('admin.properties.*') ? 'active' : '' }}">Manage Properties</a>
             <a href="{{ route('admin.agents.index') }}" class="{{ request()->routeIs('admin.agents.*') ? 'active' : '' }}">Manage Agents</a>
+            <a href="{{ route('admin.home-content.edit') }}" class="{{ request()->routeIs('admin.home-content.*') ? 'active' : '' }}">Home Page Content</a>
             <a href="{{ route('home') }}" class="back-to-site">Back to Site</a>
         </nav>
     </div>

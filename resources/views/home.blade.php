@@ -1,41 +1,29 @@
+@php($content = \App\Http\Controllers\Admin\HomeContentController::load())
 @extends('layouts.app')
 
-@section('title', 'Home Finders Coastal - Discover the Exceptional')
+@section('title', 'Home Finders Coastal - ' . $content['hero_title'])
 
 @section('content')
 <main>
     <section class="hero">
         <div class="hero-content">
-            <h1>Discover the Exceptional</h1>
-            <p>Exceptional homes. Extraordinary views. Exclusive living</p>
-            <a href="{{ route('properties.index') }}" class="hero-btn">View Properties</a>
-            
+            <h1>{{ $content['hero_title'] }}</h1>
+            <p>{{ $content['hero_subtitle'] }}</p>
+            <a href="{{ $content['hero_button_url'] }}" class="hero-btn">{{ $content['hero_button_text'] }}</a>
         </div>
     </section>
 
-   <section class="categories">
-<div class="container category-grid">
-<div class="category-item">
-  <div class="category-item-inner">
-    <h3>Waterfront Estates</h3>
-    <p>Exclusive seaside luxury with unmatched serenity.</p>
-  </div>
-</div>
-<div class="category-item">
-  <div class="category-item-inner">
-    <h3>Urban Penthouses</h3>
-    <p>Experience the skyline from the top — modern & elite.</p>
-  </div>
-</div>
-<div class="category-item">
-  <div class="category-item-inner">
-    <h3>Exclusive Villas</h3>
-    <p>Private, elegant homes for the most discerning buyers.</p>
-  </div>
-</div>
-</div>
-</section>
-
-
+    <section class="categories">
+        <div class="container category-grid">
+            @foreach([1,2,3] as $i)
+                <a href="{{ $content['cat'.$i.'_url'] }}" class="category-item">
+                    <div class="category-item-inner">
+                        <h3>{{ $content['cat'.$i.'_title'] }}</h3>
+                        <p>{{ $content['cat'.$i.'_text'] }}</p>
+                    </div>
+                </a>
+            @endforeach
+        </div>
+    </section>
 </main>
 @endsection
