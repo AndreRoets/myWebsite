@@ -45,7 +45,7 @@ class ListingSyncController extends Controller
         }
 
         try {
-            $result = DB::transaction(function () use ($body) {
+            $result = DB::transaction(function () use ($body, $extId) {
                 $loc = is_array($body['location'] ?? null) ? $body['location'] : [];
                 [$province, $region, $town, $suburb] = $this->resolveLocation($loc);
 
