@@ -35,8 +35,8 @@ return [
         ],
     ],
 
-    'nexus' => [
-        'sync_token' => env('NEXUS_SYNC_TOKEN'),
+    'website_sync' => [
+        'token' => env('WEBSITE_SYNC_TOKEN'),
     ],
 
 ];

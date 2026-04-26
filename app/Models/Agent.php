@@ -11,25 +11,32 @@ class Agent extends Model
     use HasFactory;
 
     protected $fillable = [
+        'external_id',
         'name',
         'title',
         'description',
+        'bio',
         'email',
         'phone',
         'image',
+        'photo_source_url',
+        'agency_external_id',
+        'agency_name',
+        'agency_branch',
+        'created_via',
     ];
 
-    /**
-     * Get the full URL to the agent's image.
-     */
     public function getImageUrlAttribute(): ?string
     {
-        return $this->image ? Storage::disk('public')->url($this->image) : null;
+        if (!$this->image) {
+            return null;
+        }
+        if (str_starts_with($this->image, 'http://') || str_starts_with($this->image, 'https://')) {
+            return $this->image;
+        }
+        return Storage::disk('public')->url($this->image);
     }
 
-    /**
-     * Get the properties for the agent.
-     */
     public function properties()
     {
         return $this->hasMany(Property::class);

@@ -12,6 +12,7 @@ use App\Http\Controllers\ListingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\PropertyAdminController;
 use App\Http\Controllers\Admin\HomeContentController;
+use App\Http\Controllers\Admin\LocationAdminController;
 
 Route::get('/', fn() => view('home'))->name('home');
 
@@ -52,6 +53,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Home page content
     Route::get('home-content', [HomeContentController::class, 'edit'])->name('home-content.edit');
     Route::put('home-content', [HomeContentController::class, 'update'])->name('home-content.update');
+
+    // Settings → Locations
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('locations', [LocationAdminController::class, 'index'])->name('locations.index');
+        Route::post('locations', [LocationAdminController::class, 'store'])->name('locations.store');
+        Route::put('locations/{tab}/{id}', [LocationAdminController::class, 'update'])->name('locations.update');
+        Route::post('locations/{tab}/{id}/toggle', [LocationAdminController::class, 'toggle'])->name('locations.toggle');
+        Route::delete('locations/{tab}/{id}', [LocationAdminController::class, 'destroy'])->name('locations.destroy');
+        Route::post('locations/{tab}/merge', [LocationAdminController::class, 'merge'])->name('locations.merge');
+    });
 });
 
 // Authentication Routes

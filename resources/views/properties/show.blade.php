@@ -138,8 +138,8 @@
                     <div class="carousel-slides">
                         @foreach($initialGallery as $index => $img)
                             <div class="carousel-slide @if($index === 0) active @endif">
-                                {{-- assets are under /public/storage/... --}}
-                                <img src="{{ asset('storage/' . $img) }}" alt="Property image {{ $index + 1 }}" data-gallery-image>
+                                @php $isFull = is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://')); @endphp
+                                <img src="{{ $isFull ? $img : asset('storage/' . $img) }}" alt="Property image {{ $index + 1 }}" data-gallery-image>
                             </div>
                         @endforeach
                         <button class="carousel-control prev" aria-label="Previous">&lsaquo;</button>
@@ -152,7 +152,12 @@
                 <!-- Title and Price Row -->
                 <div class="title-price-row">
                     <div>
-                        <div class="location">{{ $property->suburb }}, {{ $property->city }}</div>
+                        <div class="location">
+                            @php
+                                $crumbs = array_filter([$property->suburb, $property->town ?? $property->city, $property->region]);
+                            @endphp
+                            {{ implode(' › ', $crumbs) }}
+                        </div>
                         <h1 class="property-title">{{ $property->title }}</h1>
                         <div class="price">R {{ number_format($property->price, 0, ',', ' ') }}</div>
                     </div>
@@ -198,6 +203,55 @@
                 <div class="property-description">
                     <p>{{ $property->description }}</p>
                 </div>
+
+                {{-- Features --}}
+                @if(!empty($property->features_json))
+                    <hr class="divider">
+                    <div class="property-features">
+                        <h3 style="margin-bottom:.75rem;">Features</h3>
+                        <div style="display:flex;flex-wrap:wrap;gap:.5rem;">
+                            @foreach($property->features_json as $key => $value)
+                                @php
+                                    if (is_bool($value)) {
+                                        if (!$value) continue;
+                                        $label = Str::headline((string) $key);
+                                    } elseif (is_array($value)) {
+                                        $label = Str::headline((string) $key) . ': ' . implode(', ', array_map(fn($v) => is_scalar($v) ? (string) $v : '', $value));
+                                    } else {
+                                        $label = Str::headline((string) $key) . ': ' . $value;
+                                    }
+                                @endphp
+                                <span style="background:var(--navy-800,#1a2845);color:var(--gold-500,#c0a87f);padding:.35rem .75rem;border-radius:999px;font-size:.85rem;border:1px solid rgba(192,168,127,.4);">{{ $label }}</span>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                {{-- Video --}}
+                @if($property->youtube_video_id)
+                    <hr class="divider">
+                    <div class="property-video">
+                        <h3 style="margin-bottom:.75rem;">Video Tour</h3>
+                        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;">
+                            <iframe src="https://www.youtube.com/embed/{{ $property->youtube_video_id }}"
+                                style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+                                allowfullscreen loading="lazy" title="Video tour"></iframe>
+                        </div>
+                    </div>
+                @endif
+
+                {{-- Matterport --}}
+                @if($property->matterport_id)
+                    <hr class="divider">
+                    <div class="property-matterport">
+                        <h3 style="margin-bottom:.75rem;">3D Walkthrough</h3>
+                        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;">
+                            <iframe src="https://my.matterport.com/show/?m={{ $property->matterport_id }}"
+                                style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+                                allowfullscreen loading="lazy" title="3D walkthrough"></iframe>
+                        </div>
+                    </div>
+                @endif
             </div>
         </section>
 
@@ -212,7 +266,7 @@
             @if($property->agent)
                 <div class="agent-sidebar-card">
                     <div class="agent-image-wrapper">
-                        <img src="{{ $property->agent->image ? asset('storage/' . $property->agent->image) : asset('Image/agent-placeholder.webp') }}" alt="{{ $property->agent->name ?? 'Agent' }}">
+                        <img src="{{ $property->agent->image_url ?: asset('Image/agent-placeholder.webp') }}" alt="{{ $property->agent->name ?? 'Agent' }}">
                     </div>
                     <div class="agent-details">
                         <h4 class="agent-name">{{ $property->agent->name }}</h4>
@@ -253,8 +307,11 @@
 
     const assetBaseUrl = @json(asset('storage/'));
 
-    // Helper to get full URL
+    // Helper to get full URL — synced images already include scheme + host.
     function getImageUrl(path) {
+        if (typeof path === 'string' && (path.startsWith('http://') || path.startsWith('https://'))) {
+            return path;
+        }
         return `${assetBaseUrl}/${path}`;
     }
 
