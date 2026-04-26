@@ -54,6 +54,13 @@ class ListingSyncController extends Controller
                     $agent = $this->upsertAgent($body['agent'], $body['agency'] ?? null);
                 }
 
+                // One-time migration concern: any leftover soft-deleted rows from prior behavior
+                // get restored before re-upsert. Going forward, DELETE is hard, so this is cold.
+                $existing = Property::withTrashed()->where('external_id', $extId)->first();
+                if ($existing && method_exists($existing, 'trashed') && $existing->trashed()) {
+                    $existing->restore();
+                }
+
                 $property = Property::withTrashed()->updateOrCreate(
                     ['external_id' => $extId],
                     $this->propertyAttributes($body, $extId, $loc, $province, $region, $town, $suburb, $agent)
@@ -135,14 +142,23 @@ class ListingSyncController extends Controller
     public function destroy(Request $request, string $externalId): JsonResponse
     {
         $start = microtime(true);
-        $property = Property::where('external_id', $externalId)->first();
+
+        $property = Property::withTrashed()->where('external_id', $externalId)->first();
         if (!$property) {
-            $resp = ['ok' => true, 'message' => 'not found, treated as deleted'];
+            $resp = ['ok' => true, 'external_id' => $externalId, 'deleted' => false];
             $this->log('delete', $externalId, 200, $start, [], $resp);
             return response()->json($resp);
         }
-        $property->delete();
-        $resp = ['ok' => true, 'property_id' => $property->id];
+
+        $propertyId = $property->id;
+
+        // Wipe image files for this property; agents and taxonomy are shared, leave alone.
+        Storage::disk('public')->deleteDirectory("properties/{$propertyId}");
+
+        // Hard-delete regardless of SoftDeletes — dashboard is source of truth.
+        $property->forceDelete();
+
+        $resp = ['ok' => true, 'external_id' => $externalId, 'property_id' => $propertyId, 'deleted' => true];
         $this->log('delete', $externalId, 200, $start, [], $resp);
         return response()->json($resp);
     }
