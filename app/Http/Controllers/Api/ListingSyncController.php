@@ -16,256 +16,92 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 
 class ListingSyncController extends Controller
 {
+    private const IMAGE_BUCKETS = [
+        'images'         => 'primary_images_json',
+        'gallery_images' => 'gallery_images_json',
+        'dawn_images'    => 'dawn_images_json',
+        'noon_images'    => 'noon_images_json',
+        'dusk_images'    => 'dusk_images_json',
+    ];
+
     public function sync(Request $request): JsonResponse
     {
-        $start  = microtime(true);
-        $body   = $request->all();
-        $extId  = $body['external_id'] ?? null;
+        $start    = microtime(true);
+        $body     = $request->all();
+        $extId    = $body['external_id'] ?? null;
         $loggable = $this->stripBytesForLog($body);
 
-        try {
-            $data = $request->validate([
-                'external_id'    => ['required', 'string'],
-                'title'          => ['required', 'string', 'max:500'],
-                'excerpt'        => ['nullable', 'string'],
-                'description'    => ['nullable', 'string'],
-                'listing_type'   => ['nullable', 'string'],
-                'mandate_type'   => ['nullable', 'string'],
-                'status'         => ['required', 'string'],
-                'price'          => ['required', 'integer', 'min:0'],
-                'category'       => ['nullable', 'string'],
-                'property_type'  => ['nullable', 'string'],
-
-                'location'           => ['nullable', 'array'],
-                'location.unit_number'   => ['nullable', 'string'],
-                'location.street_number' => ['nullable', 'string'],
-                'location.street_name'   => ['nullable', 'string'],
-                'location.complex_name'  => ['nullable', 'string'],
-                'location.suburb'        => ['nullable', 'string'],
-                'location.town'          => ['nullable', 'string'],
-                'location.city'          => ['nullable', 'string'],
-                'location.region'        => ['nullable', 'string'],
-                'location.province'      => ['nullable', 'string'],
-                'location.postal_code'   => ['nullable', 'string'],
-                'location.latitude'      => ['nullable', 'numeric'],
-                'location.longitude'     => ['nullable', 'numeric'],
-
-                'beds'           => ['nullable', 'integer'],
-                'baths'          => ['nullable', 'numeric'],
-                'garages'        => ['nullable', 'integer'],
-                'size_m2'        => ['nullable', 'integer'],
-                'erf_size_m2'    => ['nullable', 'integer'],
-
-                'listed_date'    => ['nullable', 'date'],
-                'expiry_date'    => ['nullable', 'date'],
-                'published_at'   => ['nullable', 'date'],
-
-                'images'              => ['nullable', 'array'],
-                'images.*.bytes'      => ['nullable', 'string'],
-                'images.*.mime'       => ['nullable', 'string'],
-                'images.*.filename'   => ['nullable', 'string'],
-                'images.*.sort_order' => ['nullable', 'integer'],
-
-                'dawn_images'              => ['nullable', 'array'],
-                'dawn_images.*.bytes'      => ['nullable', 'string'],
-                'dawn_images.*.mime'       => ['nullable', 'string'],
-                'dawn_images.*.filename'   => ['nullable', 'string'],
-                'dawn_images.*.sort_order' => ['nullable', 'integer'],
-
-                'noon_images'              => ['nullable', 'array'],
-                'noon_images.*.bytes'      => ['nullable', 'string'],
-                'noon_images.*.mime'       => ['nullable', 'string'],
-                'noon_images.*.filename'   => ['nullable', 'string'],
-                'noon_images.*.sort_order' => ['nullable', 'integer'],
-
-                'dusk_images'              => ['nullable', 'array'],
-                'dusk_images.*.bytes'      => ['nullable', 'string'],
-                'dusk_images.*.mime'       => ['nullable', 'string'],
-                'dusk_images.*.filename'   => ['nullable', 'string'],
-                'dusk_images.*.sort_order' => ['nullable', 'integer'],
-
-                'gallery_images'              => ['nullable', 'array'],
-                'gallery_images.*.bytes'      => ['nullable', 'string'],
-                'gallery_images.*.mime'       => ['nullable', 'string'],
-                'gallery_images.*.filename'   => ['nullable', 'string'],
-                'gallery_images.*.sort_order' => ['nullable', 'integer'],
-
-                'youtube_video_id' => ['nullable', 'string'],
-                'matterport_id'    => ['nullable', 'string'],
-
-                'features'       => ['nullable', 'array'],
-
-                'agent'              => ['nullable', 'array'],
-                'agent.external_id'  => ['nullable', 'string'],
-                'agent.name'         => ['nullable', 'string'],
-                'agent.email'        => ['nullable', 'email'],
-                'agent.phone'        => ['nullable', 'string'],
-                'agent.bio'          => ['nullable', 'string'],
-                'agent.photo'              => ['nullable', 'array'],
-                'agent.photo.bytes'        => ['required_with:agent.photo', 'string'],
-                'agent.photo.mime'         => ['nullable', 'string'],
-                'agent.photo.filename'     => ['nullable', 'string'],
-
-                'agency'             => ['nullable', 'array'],
-            ]);
-        } catch (ValidationException $e) {
-            $resp = ['error' => 'validation', 'fields' => $e->errors()];
-            $this->log('sync', $extId, 422, $start, $loggable, $resp);
-            return response()->json($resp, 422);
+        if (!$extId || !is_string($extId)) {
+            return $this->fail($extId, 422, 'external_id is required', $loggable, $start);
+        }
+        if (empty($body['title'])) {
+            return $this->fail($extId, 422, 'title is required', $loggable, $start);
+        }
+        if (!isset($body['price']) || !is_numeric($body['price'])) {
+            return $this->fail($extId, 422, 'price is required (integer)', $loggable, $start);
         }
 
         try {
-            $result = DB::transaction(function () use ($data) {
-                $created = [];
+            $result = DB::transaction(function () use ($body) {
+                $loc = is_array($body['location'] ?? null) ? $body['location'] : [];
+                [$province, $region, $town, $suburb] = $this->resolveLocation($loc);
 
-                // Location taxonomy
-                $loc = $data['location'] ?? [];
-                [$province, $region, $town, $suburb, $locCreated] = $this->resolveLocation($loc);
-                $created = array_merge($created, $locCreated);
-
-                // Agent
-                $agentInput = $data['agent'] ?? null;
-                $agencyInput = $data['agency'] ?? null;
                 $agent = null;
-                if ($agentInput) {
-                    [$agent, $agentCreated] = $this->resolveAgent($agentInput, $agencyInput);
-                    if ($agentCreated) $created[] = 'agent';
+                if (!empty($body['agent']) && is_array($body['agent'])) {
+                    $agent = $this->upsertAgent($body['agent'], $body['agency'] ?? null);
                 }
 
-                // Property upsert by external_id
                 $property = Property::withTrashed()->updateOrCreate(
-                    ['external_id' => $data['external_id']],
-                    [
-                        'agent_id'      => $agent?->id,
-                        'title'         => $data['title'],
-                        'slug'          => $this->uniqueSlug($data['title'], $data['external_id']),
-                        'excerpt'       => $data['excerpt'] ?? null,
-                        'description'   => $data['description'] ?? null,
-                        'price'         => $data['price'],
-                        'status'        => $data['status'],
-                        'type'          => $data['property_type'] ?? 'house',
-                        'listing_type'  => $data['listing_type'] ?? null,
-                        'mandate_type'  => $data['mandate_type'] ?? null,
-                        'category'      => $data['category'] ?? null,
-
-                        'unit_number'   => $loc['unit_number']   ?? null,
-                        'street_number' => $loc['street_number'] ?? null,
-                        'street_name'   => $loc['street_name']   ?? null,
-                        'complex_name'  => $loc['complex_name']  ?? null,
-                        'suburb'        => $loc['suburb']        ?? null,
-                        'town'          => $loc['town']          ?? null,
-                        'city'          => $loc['city']          ?? null,
-                        'region'        => $loc['region']        ?? null,
-                        'province'      => $loc['province']      ?? null,
-                        'postal_code'   => $loc['postal_code']   ?? null,
-                        'latitude'      => $loc['latitude']      ?? null,
-                        'longitude'     => $loc['longitude']     ?? null,
-
-                        'province_id'   => $province?->id,
-                        'region_id'     => $region?->id,
-                        'town_id'       => $town?->id,
-                        'suburb_id'     => $suburb?->id,
-
-                        'bedrooms'      => $data['beds']        ?? null,
-                        'bathrooms'     => isset($data['baths']) ? (int) $data['baths'] : null,
-                        'garages'       => $data['garages']     ?? null,
-                        'floor_size'    => $data['size_m2']     ?? null,
-                        'erf_size'      => $data['erf_size_m2'] ?? null,
-
-                        'listed_date'   => $data['listed_date']  ?? null,
-                        'expiry_date'   => $data['expiry_date']  ?? null,
-                        'published_at'  => $data['published_at'] ?? null,
-                        'synced_at'     => now(),
-
-                        // Image bucket paths are filled in below, after the property has an id.
-                        'primary_images_json' => null,
-                        'gallery_images_json' => null,
-                        'dawn_images_json'    => null,
-                        'noon_images_json'    => null,
-                        'dusk_images_json'    => null,
-                        'hero_image'          => null,
-
-                        'youtube_video_id' => $data['youtube_video_id'] ?? null,
-                        'matterport_id'    => $data['matterport_id']    ?? null,
-
-                        'features_json' => $data['features'] ?? null,
-                        'agency_json'   => $agencyInput ?? null,
-
-                        'display'       => 1,
-                        'is_visible'    => true,
-                        'deleted_at'    => null,
-                    ]
+                    ['external_id' => $extId],
+                    $this->propertyAttributes($body, $extId, $loc, $province, $region, $town, $suburb, $agent)
                 );
 
-                // Wipe existing image directory for this property (idempotent re-sync).
-                $this->wipeImageDir($property->id);
+                // Wipe any existing image dir for this property — idempotent re-sync.
+                Storage::disk('public')->deleteDirectory("properties/{$property->id}");
 
-                $bucketMap = [
-                    'images'         => 'primary_images_json',
-                    'gallery_images' => 'gallery_images_json',
-                    'dawn_images'    => 'dawn_images_json',
-                    'noon_images'    => 'noon_images_json',
-                    'dusk_images'    => 'dusk_images_json',
-                ];
-
-                $totalSaved = 0;
-                $writtenPaths = [];   // tracked so we can clean up on rollback
-                $bucketPaths = [];
+                $bucketCols   = [];
+                $writtenPaths = [];
                 $primaryPaths = [];
 
-                foreach ($bucketMap as $payloadKey => $column) {
-                    $items = $data[$payloadKey] ?? [];
+                foreach (self::IMAGE_BUCKETS as $payloadKey => $column) {
+                    $items = $body[$payloadKey] ?? [];
                     if (!is_array($items) || empty($items)) {
-                        $bucketPaths[$column] = null;
+                        $bucketCols[$column] = null;
                         continue;
                     }
-                    [$paths, $saved, $written] = $this->writeImageBucket($property->id, $payloadKey, $items);
-                    $writtenPaths = array_merge($writtenPaths, $written);
-                    $totalSaved  += $saved;
-                    $bucketPaths[$column] = $paths ?: null;
-                    if ($payloadKey === 'images') {
-                        $primaryPaths = $paths;
-                    }
+                    $paths = $this->writeBucket($property->id, $payloadKey, $items);
+                    $bucketCols[$column] = $paths ?: null;
+                    $writtenPaths        = array_merge($writtenPaths, $paths);
+                    if ($payloadKey === 'images') $primaryPaths = $paths;
                 }
 
-                // Verify on-disk count matches; only count files that actually exist.
-                $confirmed = 0;
-                foreach ($writtenPaths as $p) {
-                    if (Storage::disk('public')->exists($p)) $confirmed++;
-                }
-                $totalSaved = $confirmed;
+                // Confirm files actually exist on disk; only count the survivors.
+                $confirmed = array_values(array_filter(
+                    $writtenPaths,
+                    fn ($p) => Storage::disk('public')->exists($p)
+                ));
 
-                $allPaths = [];
-                foreach ($bucketPaths as $col => $paths) {
-                    if (is_array($paths)) $allPaths = array_merge($allPaths, $paths);
-                }
+                $hero = $primaryPaths[0] ?? ($confirmed[0] ?? null);
 
-                $bucketPaths['hero_image'] = $primaryPaths[0] ?? ($allPaths[0] ?? null);
-                $bucketPaths['display']    = 1;
-                $bucketPaths['is_visible'] = true;
+                $bucketCols['hero_image'] = $hero;
+                $bucketCols['display']    = 1;
+                $bucketCols['is_visible'] = true;
 
-                try {
-                    $property->update($bucketPaths);
-                    // Write legacy `images` column directly to bypass the hasMany relation collision.
-                    DB::table('properties')->where('id', $property->id)->update([
-                        'images' => !empty($allPaths) ? json_encode(array_values($allPaths)) : null,
-                    ]);
-                } catch (\Throwable $e) {
-                    foreach ($writtenPaths as $p) Storage::disk('public')->delete($p);
-                    throw $e;
-                }
+                $property->update($bucketCols);
+
+                // Legacy `images` column collides with the hasMany relation, so write it raw.
+                DB::table('properties')->where('id', $property->id)->update([
+                    'images' => $confirmed ? json_encode($confirmed) : null,
+                ]);
 
                 return [
-                    'property'      => $property,
-                    'agent'         => $agent,
-                    'suburb'        => $suburb,
-                    'created'       => array_values(array_unique($created)),
-                    'images_saved'  => $totalSaved,
-                    'written_paths' => $writtenPaths,
+                    'property'     => $property->fresh(),
+                    'agent'        => $agent,
+                    'suburb'       => $suburb,
+                    'images_saved' => count($confirmed),
                 ];
             });
 
@@ -275,15 +111,16 @@ class ListingSyncController extends Controller
                 'agent_id'     => $result['agent']?->id,
                 'suburb_id'    => $result['suburb']?->id,
                 'images_saved' => $result['images_saved'],
-                'created'      => $result['created'],
             ];
             $this->log('sync', $extId, 200, $start, $loggable, $resp);
             return response()->json($resp);
         } catch (\Throwable $e) {
-            Log::error('Listing sync failed', ['error' => $e->getMessage(), 'external_id' => $extId]);
-            $resp = ['error' => 'server', 'message' => $e->getMessage()];
-            $this->log('sync', $extId, 500, $start, $loggable, $resp, $e->getMessage());
-            return response()->json($resp, 500);
+            Log::error('Listing sync failed', [
+                'external_id' => $extId,
+                'error'       => $e->getMessage(),
+                'file'        => $e->getFile() . ':' . $e->getLine(),
+            ]);
+            return $this->fail($extId, 500, $e->getMessage(), $loggable, $start);
         }
     }
 
@@ -302,87 +139,114 @@ class ListingSyncController extends Controller
         return response()->json($resp);
     }
 
+    private function propertyAttributes(
+        array $body, string $extId, array $loc,
+        ?Province $province, ?Region $region, ?Town $town, ?Suburb $suburb,
+        ?Agent $agent
+    ): array {
+        return [
+            'agent_id'      => $agent?->id,
+            'title'         => (string) $body['title'],
+            'slug'          => $this->uniqueSlug($body['title'], $extId),
+            'excerpt'       => $body['excerpt']     ?? null,
+            'description'   => $body['description'] ?? null,
+            'price'         => (int) $body['price'],
+            'status'        => (string) ($body['status'] ?? 'for_sale'),
+            'type'          => (string) ($body['property_type'] ?? 'house'),
+            'listing_type'  => $body['listing_type'] ?? null,
+            'mandate_type'  => $body['mandate_type'] ?? null,
+            'category'      => $body['category']     ?? null,
+
+            'unit_number'   => $loc['unit_number']   ?? null,
+            'street_number' => $loc['street_number'] ?? null,
+            'street_name'   => $loc['street_name']   ?? null,
+            'complex_name'  => $loc['complex_name']  ?? null,
+            'suburb'        => $loc['suburb']        ?? null,
+            'town'          => $loc['town']          ?? null,
+            'city'          => $loc['city']          ?? null,
+            'region'        => $loc['region']        ?? null,
+            'province'      => $loc['province']      ?? null,
+            'postal_code'   => $loc['postal_code']   ?? null,
+            'latitude'      => $loc['latitude']      ?? null,
+            'longitude'     => $loc['longitude']     ?? null,
+
+            'province_id'   => $province?->id,
+            'region_id'     => $region?->id,
+            'town_id'       => $town?->id,
+            'suburb_id'     => $suburb?->id,
+
+            'bedrooms'      => $body['beds']        ?? null,
+            'bathrooms'     => isset($body['baths']) ? (int) $body['baths'] : null,
+            'garages'       => $body['garages']     ?? null,
+            'floor_size'    => $body['size_m2']     ?? null,
+            'erf_size'      => $body['erf_size_m2'] ?? null,
+
+            'listed_date'   => $body['listed_date']  ?? null,
+            'expiry_date'   => $body['expiry_date']  ?? null,
+            'published_at'  => $body['published_at'] ?? now(),
+            'synced_at'     => now(),
+
+            'youtube_video_id' => $body['youtube_video_id'] ?? null,
+            'matterport_id'    => $body['matterport_id']    ?? null,
+
+            'features_json' => $body['features'] ?? null,
+            'agency_json'   => $body['agency']   ?? null,
+
+            'display'       => 1,
+            'is_visible'    => true,
+            'deleted_at'    => null,
+        ];
+    }
+
     /**
-     * @return array{0: ?Province, 1: ?Region, 2: ?Town, 3: ?Suburb, 4: array<string>}
+     * @return array{0: ?Province, 1: ?Region, 2: ?Town, 3: ?Suburb}
      */
     private function resolveLocation(array $loc): array
     {
-        $created = [];
         $provinceName = $this->clean($loc['province'] ?? null);
         $regionName   = $this->clean($loc['region']   ?? null);
         $townName     = $this->clean($loc['town']     ?? $loc['city'] ?? null);
         $suburbName   = $this->clean($loc['suburb']   ?? null);
 
-        $province = $regionModel = $town = $suburb = null;
+        $province = $region = $town = $suburb = null;
 
         if ($provinceName) {
-            $province = Province::whereRaw('LOWER(name) = ?', [strtolower($provinceName)])->first();
-            if (!$province) {
-                $province = Province::create([
-                    'name'        => $provinceName,
-                    'slug'        => $this->uniqueTaxonomySlug(Province::class, $provinceName),
-                    'created_via' => 'sync',
-                ]);
-                $created[] = 'province';
-            }
+            $province = Province::firstOrCreate(
+                [DB::raw('LOWER(name)') => strtolower($provinceName)],
+                ['name' => $provinceName, 'slug' => $this->taxonomySlug(Province::class, $provinceName), 'created_via' => 'sync']
+            );
         }
-
         if ($regionName && $province) {
-            $regionModel = Region::where('province_id', $province->id)
-                ->whereRaw('LOWER(name) = ?', [strtolower($regionName)])->first();
-            if (!$regionModel) {
-                $regionModel = Region::create([
-                    'province_id' => $province->id,
-                    'name'        => $regionName,
-                    'slug'        => $this->uniqueTaxonomySlug(Region::class, $regionName, ['province_id' => $province->id]),
-                    'created_via' => 'sync',
-                ]);
-                $created[] = 'region';
-            }
+            $region = Region::firstOrCreate(
+                ['province_id' => $province->id, 'name' => $regionName],
+                ['slug' => $this->taxonomySlug(Region::class, $regionName, ['province_id' => $province->id]), 'created_via' => 'sync']
+            );
         }
-
-        if ($townName && $regionModel) {
-            $town = Town::where('region_id', $regionModel->id)
-                ->whereRaw('LOWER(name) = ?', [strtolower($townName)])->first();
-            if (!$town) {
-                $town = Town::create([
-                    'region_id'   => $regionModel->id,
-                    'name'        => $townName,
-                    'slug'        => $this->uniqueTaxonomySlug(Town::class, $townName, ['region_id' => $regionModel->id]),
-                    'created_via' => 'sync',
-                ]);
-                $created[] = 'town';
-            }
+        if ($townName && $region) {
+            $town = Town::firstOrCreate(
+                ['region_id' => $region->id, 'name' => $townName],
+                ['slug' => $this->taxonomySlug(Town::class, $townName, ['region_id' => $region->id]), 'created_via' => 'sync']
+            );
         }
-
         if ($suburbName && $town) {
-            $suburb = Suburb::where('town_id', $town->id)
-                ->whereRaw('LOWER(name) = ?', [strtolower($suburbName)])->first();
-            if (!$suburb) {
-                $suburb = Suburb::create([
-                    'town_id'     => $town->id,
-                    'name'        => $suburbName,
-                    'slug'        => $this->uniqueTaxonomySlug(Suburb::class, $suburbName, ['town_id' => $town->id]),
+            $suburb = Suburb::firstOrCreate(
+                ['town_id' => $town->id, 'name' => $suburbName],
+                [
+                    'slug'        => $this->taxonomySlug(Suburb::class, $suburbName, ['town_id' => $town->id]),
                     'postal_code' => $loc['postal_code'] ?? null,
                     'latitude'    => $loc['latitude']    ?? null,
                     'longitude'   => $loc['longitude']   ?? null,
                     'created_via' => 'sync',
-                ]);
-                $created[] = 'suburb';
-            }
+                ]
+            );
         }
 
-        return [$province, $regionModel, $town, $suburb, $created];
+        return [$province, $region, $town, $suburb];
     }
 
-    /**
-     * @return array{0: Agent, 1: bool}
-     */
-    private function resolveAgent(array $input, ?array $agency): array
+    private function upsertAgent(array $input, ?array $agency): Agent
     {
-        $created = false;
         $agent = null;
-
         if (!empty($input['external_id'])) {
             $agent = Agent::where('external_id', $input['external_id'])->first();
         }
@@ -391,50 +255,46 @@ class ListingSyncController extends Controller
         }
 
         $attrs = [
-            'external_id'        => $input['external_id'] ?? null,
+            'external_id'        => $input['external_id'] ?? ($agent->external_id ?? null),
             'name'               => $input['name']  ?? ($agent->name  ?? 'Unknown Agent'),
             'email'              => $input['email'] ?? ($agent->email ?? null),
             'phone'              => $input['phone'] ?? ($agent->phone ?? null),
             'bio'                => $input['bio']   ?? ($agent->bio   ?? null),
-            'agency_external_id' => $agency['external_id'] ?? null,
-            'agency_name'        => $agency['name']        ?? null,
-            'agency_branch'      => $agency['branch']      ?? null,
+            'agency_external_id' => $agency['external_id'] ?? ($agent->agency_external_id ?? null),
+            'agency_name'        => $agency['name']        ?? ($agent->agency_name        ?? null),
+            'agency_branch'      => $agency['branch']      ?? ($agent->agency_branch      ?? null),
         ];
 
         if (!$agent) {
-            $agent = Agent::create(array_merge($attrs, [
-                'title'       => 'Agent',
-                'created_via' => 'sync',
-            ]));
-            $created = true;
+            $agent = Agent::create(array_merge($attrs, ['title' => 'Agent', 'created_via' => 'sync']));
         } else {
             $agent->fill($attrs)->save();
         }
 
-        // Photo: spec says null → leave existing photo alone, present → replace.
-        if (!empty($input['photo']) && is_array($input['photo']) && !empty($input['photo']['bytes'])) {
-            $this->writeAgentPhoto($agent, $input['photo']);
+        $photo = $input['photo'] ?? null;
+        if (is_array($photo) && !empty($photo['bytes'])) {
+            $this->writeAgentPhoto($agent, $photo);
         }
 
-        return [$agent, $created];
+        return $agent;
     }
 
     private function writeAgentPhoto(Agent $agent, array $photo): void
     {
         $bytes = base64_decode($photo['bytes'], true);
-        if ($bytes === false || $bytes === '') {
+        if (!$bytes) {
             Log::warning('Agent photo bytes invalid', ['agent_id' => $agent->id]);
             return;
         }
 
-        $ext = $this->extFromMime($photo['mime'] ?? null, $photo['filename'] ?? null);
-        $path = "agents/{$agent->id}.{$ext}";
+        $ext      = $this->extFromMime($photo['mime'] ?? null, $photo['filename'] ?? null);
+        $path     = "agents/{$agent->id}.{$ext}";
         $sourceId = 'md5:' . md5($bytes);
 
         if ($agent->photo_source_url === $sourceId
             && $agent->image === $path
             && Storage::disk('public')->exists($path)) {
-            return;
+            return; // unchanged
         }
 
         // Remove any prior file with a different extension.
@@ -454,31 +314,24 @@ class ListingSyncController extends Controller
     }
 
     /**
-     * Decode + write one image bucket. Returns [paths[], saved count, all-paths-written-on-disk].
+     * Decode + write one image bucket. Returns the relative paths that ended up on disk.
      *
-     * @param array $items raw payload items: [{filename, mime, bytes, sort_order}]
-     * @return array{0: array<string>, 1: int, 2: array<string>}
+     * @return array<string>
      */
-    private function writeImageBucket(int $propertyId, string $bucket, array $items): array
+    private function writeBucket(int $propertyId, string $bucket, array $items): array
     {
-        // Sort by sort_order ascending; missing values go last but stable.
-        usort($items, function ($a, $b) {
-            $sa = $a['sort_order'] ?? PHP_INT_MAX;
-            $sb = $b['sort_order'] ?? PHP_INT_MAX;
-            return $sa <=> $sb;
-        });
+        usort($items, fn ($a, $b) =>
+            ($a['sort_order'] ?? PHP_INT_MAX) <=> ($b['sort_order'] ?? PHP_INT_MAX)
+        );
 
         $paths = [];
-        $written = [];
         foreach ($items as $i => $item) {
             $b64 = $item['bytes'] ?? null;
-            if (!$b64 || !is_string($b64)) {
-                Log::warning('Sync image item missing bytes', ['property_id' => $propertyId, 'bucket' => $bucket, 'index' => $i]);
-                continue;
-            }
+            if (!is_string($b64) || $b64 === '') continue;
+
             $bytes = base64_decode($b64, true);
-            if ($bytes === false || $bytes === '') {
-                Log::warning('Sync image bytes failed to decode', ['property_id' => $propertyId, 'bucket' => $bucket, 'index' => $i]);
+            if (!$bytes) {
+                Log::warning('Sync image decode failed', compact('propertyId', 'bucket') + ['index' => $i]);
                 continue;
             }
 
@@ -486,23 +339,41 @@ class ListingSyncController extends Controller
             $orig = $item['filename'] ?? "image-{$i}.jpg";
             $ext  = $this->extFromMime($item['mime'] ?? null, $orig);
             $stem = Str::slug(pathinfo($orig, PATHINFO_FILENAME)) ?: 'image';
-            $name = sprintf('%d-%s.%s', $sort, $stem, $ext);
-            $path = "properties/{$propertyId}/{$bucket}/{$name}";
+            $path = "properties/{$propertyId}/{$bucket}/{$sort}-{$stem}.{$ext}";
 
-            Storage::disk('public')->put($path, $bytes);
-            $paths[]   = $path;
-            $written[] = $path;
+            if (Storage::disk('public')->put($path, $bytes)) {
+                $paths[] = $path;
+            }
         }
-
-        return [$paths, count($paths), $written];
+        return $paths;
     }
 
-    private function wipeImageDir(int $propertyId): void
+    private function uniqueSlug(string $title, string $extId): string
     {
-        $dir = "properties/{$propertyId}";
-        if (Storage::disk('public')->exists($dir)) {
-            Storage::disk('public')->deleteDirectory($dir);
+        $base      = (Str::slug($title) ?: 'property') . '-' . substr(sha1($extId), 0, 8);
+        $candidate = $base;
+        $i = 1;
+        while (Property::withTrashed()
+            ->where('slug', $candidate)
+            ->where('external_id', '!=', $extId)
+            ->exists()
+        ) {
+            $candidate = $base . '-' . (++$i);
         }
+        return $candidate;
+    }
+
+    private function taxonomySlug(string $modelClass, string $name, array $scope = []): string
+    {
+        $base = Str::slug($name) ?: 'item';
+        $slug = $base;
+        $i    = 1;
+        $q    = $modelClass::query();
+        foreach ($scope as $k => $v) $q->where($k, $v);
+        while ((clone $q)->where('slug', $slug)->exists()) {
+            $slug = $base . '-' . (++$i);
+        }
+        return $slug;
     }
 
     private function extFromMime(?string $mime, ?string $filename = null): string
@@ -523,13 +394,16 @@ class ListingSyncController extends Controller
             : 'jpg';
     }
 
-    /**
-     * Return a copy of the request body with binary `bytes` fields replaced by
-     * their length, so the listing_sync_logs table doesn't balloon.
-     */
+    private function clean(?string $v): ?string
+    {
+        if ($v === null) return null;
+        $v = trim($v);
+        return $v === '' ? null : $v;
+    }
+
     private function stripBytesForLog(array $body): array
     {
-        foreach (['images', 'dawn_images', 'noon_images', 'dusk_images', 'gallery_images'] as $bucket) {
+        foreach (array_keys(self::IMAGE_BUCKETS) as $bucket) {
             if (!empty($body[$bucket]) && is_array($body[$bucket])) {
                 foreach ($body[$bucket] as $i => $item) {
                     if (isset($item['bytes'])) {
@@ -544,41 +418,11 @@ class ListingSyncController extends Controller
         return $body;
     }
 
-    private function clean(?string $v): ?string
+    private function fail(?string $extId, int $status, string $message, array $loggable, float $start): JsonResponse
     {
-        if ($v === null) return null;
-        $v = trim($v);
-        return $v === '' ? null : $v;
-    }
-
-    private function uniqueSlug(string $title, string $extId): string
-    {
-        $base = Str::slug($title) ?: 'property';
-        $slug = $base . '-' . substr(sha1($extId), 0, 8);
-        // Property::updateOrCreate uses external_id as key, so the slug only needs to differ from
-        // any *other* property's slug.
-        $i = 1;
-        $candidate = $slug;
-        while (Property::withTrashed()
-            ->where('slug', $candidate)
-            ->where('external_id', '!=', $extId)
-            ->exists()) {
-            $candidate = $slug . '-' . (++$i);
-        }
-        return $candidate;
-    }
-
-    private function uniqueTaxonomySlug(string $modelClass, string $name, array $scope = []): string
-    {
-        $base = Str::slug($name) ?: 'item';
-        $slug = $base;
-        $i = 1;
-        $query = $modelClass::query();
-        foreach ($scope as $k => $v) $query->where($k, $v);
-        while ((clone $query)->where('slug', $slug)->exists()) {
-            $slug = $base . '-' . (++$i);
-        }
-        return $slug;
+        $resp = ['ok' => false, 'error' => $message];
+        $this->log('sync', $extId, $status, $start, $loggable, $resp, $message);
+        return response()->json($resp, $status);
     }
 
     private function log(string $action, ?string $extId, int $status, float $start, array $body, array $resp, ?string $error = null): void
