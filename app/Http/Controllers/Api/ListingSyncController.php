@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\SyncAgentPhoto;
 use App\Models\Agent;
 use App\Models\ListingSyncLog;
 use App\Models\Property;
@@ -15,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -25,6 +25,7 @@ class ListingSyncController extends Controller
         $start  = microtime(true);
         $body   = $request->all();
         $extId  = $body['external_id'] ?? null;
+        $loggable = $this->stripBytesForLog($body);
 
         try {
             $data = $request->validate([
@@ -63,11 +64,36 @@ class ListingSyncController extends Controller
                 'expiry_date'    => ['nullable', 'date'],
                 'published_at'   => ['nullable', 'date'],
 
-                'images'         => ['nullable', 'array'],
-                'dawn_images'    => ['nullable', 'array'],
-                'noon_images'    => ['nullable', 'array'],
-                'dusk_images'    => ['nullable', 'array'],
-                'gallery_images' => ['nullable', 'array'],
+                'images'              => ['nullable', 'array'],
+                'images.*.bytes'      => ['nullable', 'string'],
+                'images.*.mime'       => ['nullable', 'string'],
+                'images.*.filename'   => ['nullable', 'string'],
+                'images.*.sort_order' => ['nullable', 'integer'],
+
+                'dawn_images'              => ['nullable', 'array'],
+                'dawn_images.*.bytes'      => ['nullable', 'string'],
+                'dawn_images.*.mime'       => ['nullable', 'string'],
+                'dawn_images.*.filename'   => ['nullable', 'string'],
+                'dawn_images.*.sort_order' => ['nullable', 'integer'],
+
+                'noon_images'              => ['nullable', 'array'],
+                'noon_images.*.bytes'      => ['nullable', 'string'],
+                'noon_images.*.mime'       => ['nullable', 'string'],
+                'noon_images.*.filename'   => ['nullable', 'string'],
+                'noon_images.*.sort_order' => ['nullable', 'integer'],
+
+                'dusk_images'              => ['nullable', 'array'],
+                'dusk_images.*.bytes'      => ['nullable', 'string'],
+                'dusk_images.*.mime'       => ['nullable', 'string'],
+                'dusk_images.*.filename'   => ['nullable', 'string'],
+                'dusk_images.*.sort_order' => ['nullable', 'integer'],
+
+                'gallery_images'              => ['nullable', 'array'],
+                'gallery_images.*.bytes'      => ['nullable', 'string'],
+                'gallery_images.*.mime'       => ['nullable', 'string'],
+                'gallery_images.*.filename'   => ['nullable', 'string'],
+                'gallery_images.*.sort_order' => ['nullable', 'integer'],
+
                 'youtube_video_id' => ['nullable', 'string'],
                 'matterport_id'    => ['nullable', 'string'],
 
@@ -79,13 +105,16 @@ class ListingSyncController extends Controller
                 'agent.email'        => ['nullable', 'email'],
                 'agent.phone'        => ['nullable', 'string'],
                 'agent.bio'          => ['nullable', 'string'],
-                'agent.photo_url'    => ['nullable', 'url'],
+                'agent.photo'              => ['nullable', 'array'],
+                'agent.photo.bytes'        => ['required_with:agent.photo', 'string'],
+                'agent.photo.mime'         => ['nullable', 'string'],
+                'agent.photo.filename'     => ['nullable', 'string'],
 
                 'agency'             => ['nullable', 'array'],
             ]);
         } catch (ValidationException $e) {
             $resp = ['error' => 'validation', 'fields' => $e->errors()];
-            $this->log('sync', $extId, 422, $start, $body, $resp);
+            $this->log('sync', $extId, 422, $start, $loggable, $resp);
             return response()->json($resp, 422);
         }
 
@@ -152,11 +181,12 @@ class ListingSyncController extends Controller
                         'published_at'  => $data['published_at'] ?? null,
                         'synced_at'     => now(),
 
-                        'primary_images_json' => $data['images']         ?? null,
-                        'gallery_images_json' => $data['gallery_images'] ?? null,
-                        'dawn_images_json'    => $data['dawn_images']    ?? null,
-                        'noon_images_json'    => $data['noon_images']    ?? null,
-                        'dusk_images_json'    => $data['dusk_images']    ?? null,
+                        // Image bucket paths are filled in below, after the property has an id.
+                        'primary_images_json' => null,
+                        'gallery_images_json' => null,
+                        'dawn_images_json'    => null,
+                        'noon_images_json'    => null,
+                        'dusk_images_json'    => null,
 
                         'youtube_video_id' => $data['youtube_video_id'] ?? null,
                         'matterport_id'    => $data['matterport_id']    ?? null,
@@ -169,27 +199,64 @@ class ListingSyncController extends Controller
                     ]
                 );
 
+                // Wipe existing image directory for this property (idempotent re-sync).
+                $this->wipeImageDir($property->id);
+
+                $bucketMap = [
+                    'images'         => 'primary_images_json',
+                    'gallery_images' => 'gallery_images_json',
+                    'dawn_images'    => 'dawn_images_json',
+                    'noon_images'    => 'noon_images_json',
+                    'dusk_images'    => 'dusk_images_json',
+                ];
+
+                $totalSaved = 0;
+                $writtenPaths = [];   // tracked so we can clean up on rollback
+                $bucketPaths = [];
+
+                foreach ($bucketMap as $payloadKey => $column) {
+                    $items = $data[$payloadKey] ?? [];
+                    if (!is_array($items) || empty($items)) {
+                        $bucketPaths[$column] = null;
+                        continue;
+                    }
+                    [$paths, $saved, $written] = $this->writeImageBucket($property->id, $payloadKey, $items);
+                    $writtenPaths = array_merge($writtenPaths, $written);
+                    $totalSaved  += $saved;
+                    $bucketPaths[$column] = $paths ?: null;
+                }
+
+                try {
+                    $property->update($bucketPaths);
+                } catch (\Throwable $e) {
+                    foreach ($writtenPaths as $p) Storage::disk('public')->delete($p);
+                    throw $e;
+                }
+
                 return [
-                    'property'  => $property,
-                    'agent'     => $agent,
-                    'suburb'    => $suburb,
-                    'created'   => array_values(array_unique($created)),
+                    'property'      => $property,
+                    'agent'         => $agent,
+                    'suburb'        => $suburb,
+                    'created'       => array_values(array_unique($created)),
+                    'images_saved'  => $totalSaved,
+                    'written_paths' => $writtenPaths,
                 ];
             });
 
             $resp = [
-                'ok'          => true,
-                'property_id' => $result['property']->id,
-                'agent_id'    => $result['agent']?->id,
-                'suburb_id'   => $result['suburb']?->id,
-                'created'     => $result['created'],
+                'ok'           => true,
+                'property_id'  => $result['property']->id,
+                'agent_id'     => $result['agent']?->id,
+                'suburb_id'    => $result['suburb']?->id,
+                'images_saved' => $result['images_saved'],
+                'created'      => $result['created'],
             ];
-            $this->log('sync', $extId, 200, $start, $body, $resp);
+            $this->log('sync', $extId, 200, $start, $loggable, $resp);
             return response()->json($resp);
         } catch (\Throwable $e) {
             Log::error('Listing sync failed', ['error' => $e->getMessage(), 'external_id' => $extId]);
             $resp = ['error' => 'server', 'message' => $e->getMessage()];
-            $this->log('sync', $extId, 500, $start, $body, $resp, $e->getMessage());
+            $this->log('sync', $extId, 500, $start, $loggable, $resp, $e->getMessage());
             return response()->json($resp, 500);
         }
     }
@@ -318,12 +385,130 @@ class ListingSyncController extends Controller
             $agent->fill($attrs)->save();
         }
 
-        $newPhotoUrl = $input['photo_url'] ?? null;
-        if ($newPhotoUrl && $newPhotoUrl !== $agent->photo_source_url) {
-            SyncAgentPhoto::dispatch($agent->id, $newPhotoUrl);
+        // Photo: spec says null → leave existing photo alone, present → replace.
+        if (!empty($input['photo']) && is_array($input['photo']) && !empty($input['photo']['bytes'])) {
+            $this->writeAgentPhoto($agent, $input['photo']);
         }
 
         return [$agent, $created];
+    }
+
+    private function writeAgentPhoto(Agent $agent, array $photo): void
+    {
+        $bytes = base64_decode($photo['bytes'], true);
+        if ($bytes === false || $bytes === '') {
+            Log::warning('Agent photo bytes invalid', ['agent_id' => $agent->id]);
+            return;
+        }
+
+        $ext = $this->extFromMime($photo['mime'] ?? null, $photo['filename'] ?? null);
+        $path = "agents/{$agent->id}.{$ext}";
+
+        // Remove any prior file with a different extension.
+        foreach (['jpg', 'jpeg', 'png', 'webp', 'gif'] as $other) {
+            $stale = "agents/{$agent->id}.{$other}";
+            if ($stale !== $path && Storage::disk('public')->exists($stale)) {
+                Storage::disk('public')->delete($stale);
+            }
+        }
+
+        Storage::disk('public')->put($path, $bytes);
+
+        $agent->forceFill([
+            'image'            => $path,
+            'photo_source_url' => 'embedded:' . sha1($bytes),
+        ])->save();
+    }
+
+    /**
+     * Decode + write one image bucket. Returns [paths[], saved count, all-paths-written-on-disk].
+     *
+     * @param array $items raw payload items: [{filename, mime, bytes, sort_order}]
+     * @return array{0: array<string>, 1: int, 2: array<string>}
+     */
+    private function writeImageBucket(int $propertyId, string $bucket, array $items): array
+    {
+        // Sort by sort_order ascending; missing values go last but stable.
+        usort($items, function ($a, $b) {
+            $sa = $a['sort_order'] ?? PHP_INT_MAX;
+            $sb = $b['sort_order'] ?? PHP_INT_MAX;
+            return $sa <=> $sb;
+        });
+
+        $paths = [];
+        $written = [];
+        foreach ($items as $i => $item) {
+            $b64 = $item['bytes'] ?? null;
+            if (!$b64 || !is_string($b64)) {
+                Log::warning('Sync image item missing bytes', ['property_id' => $propertyId, 'bucket' => $bucket, 'index' => $i]);
+                continue;
+            }
+            $bytes = base64_decode($b64, true);
+            if ($bytes === false || $bytes === '') {
+                Log::warning('Sync image bytes failed to decode', ['property_id' => $propertyId, 'bucket' => $bucket, 'index' => $i]);
+                continue;
+            }
+
+            $sort = $item['sort_order'] ?? $i;
+            $orig = $item['filename'] ?? "image-{$i}.jpg";
+            $ext  = $this->extFromMime($item['mime'] ?? null, $orig);
+            $stem = Str::slug(pathinfo($orig, PATHINFO_FILENAME)) ?: 'image';
+            $name = sprintf('%03d-%s.%s', $sort, $stem, $ext);
+            $path = "properties/{$propertyId}/{$bucket}/{$name}";
+
+            Storage::disk('public')->put($path, $bytes);
+            $paths[]   = $path;
+            $written[] = $path;
+        }
+
+        return [$paths, count($paths), $written];
+    }
+
+    private function wipeImageDir(int $propertyId): void
+    {
+        $dir = "properties/{$propertyId}";
+        if (Storage::disk('public')->exists($dir)) {
+            Storage::disk('public')->deleteDirectory($dir);
+        }
+    }
+
+    private function extFromMime(?string $mime, ?string $filename = null): string
+    {
+        $mime = strtolower((string) $mime);
+        $byMime = match (true) {
+            str_contains($mime, 'jpeg'), str_contains($mime, 'jpg') => 'jpg',
+            str_contains($mime, 'png')  => 'png',
+            str_contains($mime, 'webp') => 'webp',
+            str_contains($mime, 'gif')  => 'gif',
+            default => null,
+        };
+        if ($byMime) return $byMime;
+
+        $fromFile = strtolower((string) pathinfo((string) $filename, PATHINFO_EXTENSION));
+        return in_array($fromFile, ['jpg', 'jpeg', 'png', 'webp', 'gif'], true)
+            ? ($fromFile === 'jpeg' ? 'jpg' : $fromFile)
+            : 'jpg';
+    }
+
+    /**
+     * Return a copy of the request body with binary `bytes` fields replaced by
+     * their length, so the listing_sync_logs table doesn't balloon.
+     */
+    private function stripBytesForLog(array $body): array
+    {
+        foreach (['images', 'dawn_images', 'noon_images', 'dusk_images', 'gallery_images'] as $bucket) {
+            if (!empty($body[$bucket]) && is_array($body[$bucket])) {
+                foreach ($body[$bucket] as $i => $item) {
+                    if (isset($item['bytes'])) {
+                        $body[$bucket][$i]['bytes'] = '<' . strlen((string) $item['bytes']) . ' base64 bytes>';
+                    }
+                }
+            }
+        }
+        if (!empty($body['agent']['photo']['bytes'])) {
+            $body['agent']['photo']['bytes'] = '<' . strlen((string) $body['agent']['photo']['bytes']) . ' base64 bytes>';
+        }
+        return $body;
     }
 
     private function clean(?string $v): ?string
