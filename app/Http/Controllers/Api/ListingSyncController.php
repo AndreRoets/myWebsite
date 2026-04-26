@@ -187,6 +187,8 @@ class ListingSyncController extends Controller
                         'dawn_images_json'    => null,
                         'noon_images_json'    => null,
                         'dusk_images_json'    => null,
+                        'hero_image'          => null,
+                        'images'              => null,
 
                         'youtube_video_id' => $data['youtube_video_id'] ?? null,
                         'matterport_id'    => $data['matterport_id']    ?? null,
@@ -194,6 +196,7 @@ class ListingSyncController extends Controller
                         'features_json' => $data['features'] ?? null,
                         'agency_json'   => $agencyInput ?? null,
 
+                        'display'       => 1,
                         'is_visible'    => true,
                         'deleted_at'    => null,
                     ]
@@ -213,6 +216,7 @@ class ListingSyncController extends Controller
                 $totalSaved = 0;
                 $writtenPaths = [];   // tracked so we can clean up on rollback
                 $bucketPaths = [];
+                $primaryPaths = [];
 
                 foreach ($bucketMap as $payloadKey => $column) {
                     $items = $data[$payloadKey] ?? [];
@@ -224,7 +228,27 @@ class ListingSyncController extends Controller
                     $writtenPaths = array_merge($writtenPaths, $written);
                     $totalSaved  += $saved;
                     $bucketPaths[$column] = $paths ?: null;
+                    if ($payloadKey === 'images') {
+                        $primaryPaths = $paths;
+                    }
                 }
+
+                // Verify on-disk count matches; only count files that actually exist.
+                $confirmed = 0;
+                foreach ($writtenPaths as $p) {
+                    if (Storage::disk('public')->exists($p)) $confirmed++;
+                }
+                $totalSaved = $confirmed;
+
+                $allPaths = [];
+                foreach ($bucketPaths as $col => $paths) {
+                    if (is_array($paths)) $allPaths = array_merge($allPaths, $paths);
+                }
+
+                $bucketPaths['hero_image'] = $primaryPaths[0] ?? ($allPaths[0] ?? null);
+                $bucketPaths['images']     = !empty($allPaths) ? json_encode(array_values($allPaths)) : null;
+                $bucketPaths['display']    = 1;
+                $bucketPaths['is_visible'] = true;
 
                 try {
                     $property->update($bucketPaths);
@@ -403,6 +427,13 @@ class ListingSyncController extends Controller
 
         $ext = $this->extFromMime($photo['mime'] ?? null, $photo['filename'] ?? null);
         $path = "agents/{$agent->id}.{$ext}";
+        $sourceId = 'md5:' . md5($bytes);
+
+        if ($agent->photo_source_url === $sourceId
+            && $agent->image === $path
+            && Storage::disk('public')->exists($path)) {
+            return;
+        }
 
         // Remove any prior file with a different extension.
         foreach (['jpg', 'jpeg', 'png', 'webp', 'gif'] as $other) {
@@ -416,7 +447,7 @@ class ListingSyncController extends Controller
 
         $agent->forceFill([
             'image'            => $path,
-            'photo_source_url' => 'embedded:' . sha1($bytes),
+            'photo_source_url' => $sourceId,
         ])->save();
     }
 
@@ -453,7 +484,7 @@ class ListingSyncController extends Controller
             $orig = $item['filename'] ?? "image-{$i}.jpg";
             $ext  = $this->extFromMime($item['mime'] ?? null, $orig);
             $stem = Str::slug(pathinfo($orig, PATHINFO_FILENAME)) ?: 'image';
-            $name = sprintf('%03d-%s.%s', $sort, $stem, $ext);
+            $name = sprintf('%d-%s.%s', $sort, $stem, $ext);
             $path = "properties/{$propertyId}/{$bucket}/{$name}";
 
             Storage::disk('public')->put($path, $bytes);
