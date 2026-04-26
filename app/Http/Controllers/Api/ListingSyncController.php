@@ -118,9 +118,17 @@ class ListingSyncController extends Controller
             Log::error('Listing sync failed', [
                 'external_id' => $extId,
                 'error'       => $e->getMessage(),
+                'class'       => get_class($e),
                 'file'        => $e->getFile() . ':' . $e->getLine(),
+                'trace'       => $e->getTraceAsString(),
             ]);
-            return $this->fail($extId, 500, $e->getMessage(), $loggable, $start);
+            return $this->fail(
+                $extId,
+                500,
+                $e->getMessage() . ' @ ' . basename($e->getFile()) . ':' . $e->getLine(),
+                $loggable,
+                $start
+            );
         }
     }
 
@@ -189,8 +197,8 @@ class ListingSyncController extends Controller
             'youtube_video_id' => $body['youtube_video_id'] ?? null,
             'matterport_id'    => $body['matterport_id']    ?? null,
 
-            'features_json' => $body['features'] ?? null,
-            'agency_json'   => $body['agency']   ?? null,
+            'features_json' => is_array($body['features'] ?? null) ? $body['features'] : null,
+            'agency_json'   => is_array($body['agency']   ?? null) ? $body['agency']   : null,
 
             'display'       => 1,
             'is_visible'    => true,
@@ -211,34 +219,45 @@ class ListingSyncController extends Controller
         $province = $region = $town = $suburb = null;
 
         if ($provinceName) {
-            $province = Province::firstOrCreate(
-                [DB::raw('LOWER(name)') => strtolower($provinceName)],
-                ['name' => $provinceName, 'slug' => $this->taxonomySlug(Province::class, $provinceName), 'created_via' => 'sync']
-            );
+            $province = Province::whereRaw('LOWER(name) = ?', [strtolower($provinceName)])->first()
+                ?? Province::create([
+                    'name'        => $provinceName,
+                    'slug'        => $this->taxonomySlug(Province::class, $provinceName),
+                    'created_via' => 'sync',
+                ]);
         }
         if ($regionName && $province) {
-            $region = Region::firstOrCreate(
-                ['province_id' => $province->id, 'name' => $regionName],
-                ['slug' => $this->taxonomySlug(Region::class, $regionName, ['province_id' => $province->id]), 'created_via' => 'sync']
-            );
+            $region = Region::where('province_id', $province->id)
+                    ->whereRaw('LOWER(name) = ?', [strtolower($regionName)])->first()
+                ?? Region::create([
+                    'province_id' => $province->id,
+                    'name'        => $regionName,
+                    'slug'        => $this->taxonomySlug(Region::class, $regionName, ['province_id' => $province->id]),
+                    'created_via' => 'sync',
+                ]);
         }
         if ($townName && $region) {
-            $town = Town::firstOrCreate(
-                ['region_id' => $region->id, 'name' => $townName],
-                ['slug' => $this->taxonomySlug(Town::class, $townName, ['region_id' => $region->id]), 'created_via' => 'sync']
-            );
+            $town = Town::where('region_id', $region->id)
+                    ->whereRaw('LOWER(name) = ?', [strtolower($townName)])->first()
+                ?? Town::create([
+                    'region_id'   => $region->id,
+                    'name'        => $townName,
+                    'slug'        => $this->taxonomySlug(Town::class, $townName, ['region_id' => $region->id]),
+                    'created_via' => 'sync',
+                ]);
         }
         if ($suburbName && $town) {
-            $suburb = Suburb::firstOrCreate(
-                ['town_id' => $town->id, 'name' => $suburbName],
-                [
+            $suburb = Suburb::where('town_id', $town->id)
+                    ->whereRaw('LOWER(name) = ?', [strtolower($suburbName)])->first()
+                ?? Suburb::create([
+                    'town_id'     => $town->id,
+                    'name'        => $suburbName,
                     'slug'        => $this->taxonomySlug(Suburb::class, $suburbName, ['town_id' => $town->id]),
-                    'postal_code' => $loc['postal_code'] ?? null,
-                    'latitude'    => $loc['latitude']    ?? null,
-                    'longitude'   => $loc['longitude']   ?? null,
+                    'postal_code' => is_scalar($loc['postal_code'] ?? null) ? $loc['postal_code'] : null,
+                    'latitude'    => is_numeric($loc['latitude']  ?? null) ? $loc['latitude']  : null,
+                    'longitude'   => is_numeric($loc['longitude'] ?? null) ? $loc['longitude'] : null,
                     'created_via' => 'sync',
-                ]
-            );
+                ]);
         }
 
         return [$province, $region, $town, $suburb];
