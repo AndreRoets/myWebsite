@@ -156,11 +156,17 @@
 
         @if(!empty($agent))
             <div class="agent-sidebar-card">
-                @if(!empty($agent['image']))
-                    <div class="agent-image-wrapper">
-                        <img src="{{ $agent['image'] }}" alt="{{ $agent['name'] ?? 'Agent' }}">
-                    </div>
-                @endif
+                <div class="agent-image-wrapper">
+                    @php
+                        $agentImg = $agent['image'] ?? null;
+                        $agentImgUrl = $agentImg
+                            ? (str_starts_with($agentImg, 'http://') || str_starts_with($agentImg, 'https://')
+                                ? $agentImg
+                                : asset('storage/' . $agentImg))
+                            : asset('Image/agent-placeholder.webp');
+                    @endphp
+                    <img src="{{ $agentImgUrl }}" alt="{{ $agent['name'] ?? 'Agent' }}">
+                </div>
                 <div class="agent-details">
                     @if(!empty($agent['name']))
                         <h4 class="agent-name">{{ $agent['name'] }}</h4>
